@@ -1,0 +1,8 @@
+{
+  "/not-found": "app/not-found.js",
+  "/page": "app/page.js",
+  "/(dashboard)/dashboard/page": "app/(dashboard)/dashboard/page.js",
+  "/(dashboard)/pending/page": "app/(dashboard)/pending/page.js",
+  "/(dashboard)/shipments/page": "app/(dashboard)/shipments/page.js",
+  "/(dashboard)/issues/page": "app/(dashboard)/issues/page.js"
+}

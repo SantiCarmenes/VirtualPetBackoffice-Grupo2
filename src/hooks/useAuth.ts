@@ -1,53 +1,61 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authService } from '@/services/authService'
-import { setToken, removeToken, getToken, isAuthenticated as checkIsAuthenticated, MOCK_ADMIN_TOKEN } from '@/lib/auth'
+import { setToken, setRefreshToken, removeAllTokens, isAuthenticated } from '@/lib/auth'
+import { toast } from 'sonner'
 
 export function useAuth() {
   const router = useRouter()
   const queryClient = useQueryClient()
-  // TODO: activate login - revert to: const [isAuth, setIsAuth] = useState(false)
-  const [isAuth, setIsAuth] = useState(true)
-
-  useEffect(() => {
-    // TODO: activate login - remove this auto-login dev bypass
-    const token = getToken()
-    if (!token) {
-      setToken(MOCK_ADMIN_TOKEN)
-    }
-  }, [])
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['auth', 'me'],
-    queryFn: () => authService.me(),
-    enabled: isAuth,
+    queryFn: () => {
+      if (!isAuthenticated()) return null
+      return authService.me()
+    },
     retry: false,
   })
 
   const loginMutation = useMutation({
     mutationFn: authService.login,
-    onSuccess: (data) => {
+    onSuccess: async (data) => {
       setToken(data.accessToken)
-      setIsAuth(true)
-      queryClient.invalidateQueries({ queryKey: ['auth'] })
-      router.push('/dashboard')
+      setRefreshToken(data.refreshToken)
+
+      try {
+        const user = await authService.me()
+        if (user.role !== 'BACKOFFICE') {
+          removeAllTokens()
+          queryClient.clear()
+          toast.error('Usuario o contraseña inválidos')
+          return
+        }
+        queryClient.invalidateQueries({ queryKey: ['auth'] })
+        router.push('/dashboard')
+      } catch {
+        removeAllTokens()
+        queryClient.clear()
+        toast.error('Usuario o contraseña inválidos')
+      }
+    },
+    onError: () => {
+      toast.error('Usuario o contraseña inválidos')
     },
   })
 
   const logoutMutation = useMutation({
     mutationFn: authService.logout,
     onSuccess: () => {
-      removeToken()
-      setIsAuth(false)
+      removeAllTokens()
       queryClient.clear()
       router.push('/login')
     },
     onError: () => {
-      removeToken()
-      setIsAuth(false)
+      removeAllTokens()
       queryClient.clear()
       router.push('/login')
     },
@@ -60,7 +68,7 @@ export function useAuth() {
   return {
     user,
     isLoading,
-    isAuthenticated: isAuth,
+    isAuthenticated: isAuthenticated(),
     login: loginMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error,

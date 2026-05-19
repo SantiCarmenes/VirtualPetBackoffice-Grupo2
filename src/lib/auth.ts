@@ -1,5 +1,5 @@
 const TOKEN_KEY = 'vp_backoffice_token'
-export const MOCK_ADMIN_TOKEN = 'mock_admin_token_dev_only'
+const REFRESH_TOKEN_KEY = 'vp_backoffice_refresh_token'
 
 function getCookie(name: string): string | null {
   if (typeof document === 'undefined') return null
@@ -34,10 +34,28 @@ export function removeToken(): void {
   deleteCookie(TOKEN_KEY)
 }
 
-export function isAuthenticated(): boolean {
-  return !!getToken()
+export function getRefreshToken(): string | null {
+  if (typeof window === 'undefined') return null
+  return localStorage.getItem(REFRESH_TOKEN_KEY)
 }
 
-export function isMockAdminToken(): boolean {
-  return getToken() === MOCK_ADMIN_TOKEN
+export function setRefreshToken(token: string): void {
+  if (typeof window === 'undefined') return
+  localStorage.setItem(REFRESH_TOKEN_KEY, token)
+  setCookie(REFRESH_TOKEN_KEY, token)
+}
+
+export function removeRefreshToken(): void {
+  if (typeof window === 'undefined') return
+  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  deleteCookie(REFRESH_TOKEN_KEY)
+}
+
+export function removeAllTokens(): void {
+  removeToken()
+  removeRefreshToken()
+}
+
+export function isAuthenticated(): boolean {
+  return !!getToken()
 }

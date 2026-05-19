@@ -10,7 +10,7 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, CheckCircle } from 'lucide-react'
 
 import { Shipment, Product } from '@/types/shipment'
 import { Button } from '@/components/ui/button'
@@ -23,6 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { StatusBadge } from './status-badge'
+import { useFulfillmentMutation } from '@/hooks/useFulfillmentMutation'
 
 const columns: ColumnDef<Shipment>[] = [
   {
@@ -84,13 +85,7 @@ const columns: ColumnDef<Shipment>[] = [
     header: '',
     cell: ({ row }) => {
       const shipment = row.original
-      return (
-        <Link href={`/shipments/${shipment.id}/fulfill`}>
-          <Button variant="outline" size="sm">
-            {shipment.status === 'PENDING' ? 'Preparar' : 'Ver'}
-          </Button>
-        </Link>
-      )
+      return <ActionCell shipment={shipment} />
     },
   },
 ]
@@ -99,6 +94,38 @@ function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
   if (!sorted) return <ArrowUpDown className="ml-2 h-4 w-4" />
   if (sorted === 'asc') return <ArrowUp className="ml-2 h-4 w-4" />
   return <ArrowDown className="ml-2 h-4 w-4" />
+}
+
+function ActionCell({ shipment }: { shipment: Shipment }) {
+  const { mutate: updateStatus, isPending } = useFulfillmentMutation()
+
+  if (shipment.status === 'IN_TRANSIT') {
+    return (
+      <Button
+        variant="outline"
+        size="sm"
+        disabled={isPending}
+        onClick={() =>
+          updateStatus({
+            orderId: shipment.id,
+            status: 'DELIVERED',
+            updateOrderStatus: 'DELIVERED',
+          })
+        }
+      >
+        <CheckCircle className="mr-1 h-3 w-3" />
+        {isPending ? '...' : 'Entregado'}
+      </Button>
+    )
+  }
+
+  return (
+    <Link href={`/shipments/${shipment.id}/fulfill`}>
+      <Button variant="outline" size="sm">
+        {shipment.status === 'PENDING' ? 'Preparar' : 'Ver'}
+      </Button>
+    </Link>
+  )
 }
 
 interface ShipmentsTableProps {

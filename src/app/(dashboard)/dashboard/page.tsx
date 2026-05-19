@@ -1,21 +1,20 @@
 'use client'
 
-import Link from 'next/link'
 import { useShipments } from '@/hooks/useShipments'
 import { useIssues } from '@/hooks/useIssues'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Package, Truck, CheckCircle, AlertTriangle } from 'lucide-react'
+import Link from 'next/link'
 
 export default function DashboardPage() {
   const { data: shipmentsData, isLoading: shipmentsLoading } = useShipments()
-  const { data: issuesData, isLoading: issuesLoading } = useIssues()
+  const { data: issuesData, isLoading: issuesLoading } = useIssues(1, 100)
 
   const pendingCount = shipmentsData?.data.filter((s) => s.status === 'PENDING').length ?? 0
   const inTransitCount = shipmentsData?.data.filter((s) => s.status === 'IN_TRANSIT').length ?? 0
   const deliveredCount = shipmentsData?.data.filter((s) => s.status === 'DELIVERED').length ?? 0
-  const failedCount = shipmentsData?.data.filter((s) => s.status.startsWith('FAILED')).length ?? 0
-  const issuesCount = issuesData?.total ?? 0
+  const cancelledCount = shipmentsData?.data.filter((s) => s.status === 'CANCELLED').length ?? 0
 
   const isLoading = shipmentsLoading || issuesLoading
 
@@ -73,28 +72,15 @@ export default function DashboardPage() {
               </Card>
             </Link>
 
-            <Link href="/shipments">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Intentos Fallidos</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{failedCount}</div>
-                  <p className="text-xs text-muted-foreground">Problemas de entrega</p>
-                </CardContent>
-              </Card>
-            </Link>
-
             <Link href="/issues">
               <Card className="cursor-pointer transition-colors hover:bg-accent/50">
                 <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Incidencias</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
+                  <CardTitle className="text-sm font-medium">Cancelados</CardTitle>
+                  <AlertTriangle className="h-4 w-4 text-orange-600" />
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{issuesCount}</div>
-                  <p className="text-xs text-muted-foreground">Reembolsos y stock faltante</p>
+                  <div className="text-2xl font-bold">{cancelledCount}</div>
+                  <p className="text-xs text-muted-foreground">Pedidos cancelados</p>
                 </CardContent>
               </Card>
             </Link>

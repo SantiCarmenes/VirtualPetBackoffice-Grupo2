@@ -24,8 +24,9 @@ import {
 import { StatusBadge } from '@/components/shipments/status-badge'
 
 function getIssueType(status: string): string {
-  if (status.includes('REFUND')) return 'Reembolso'
   if (status === 'MISSING_STOCK') return 'Stock Faltante'
+  if (status === 'CANCELLED') return 'Cancelado'
+  if (status === 'FAILED_DELIVERY') return 'Entrega Fallida'
   return 'Otro'
 }
 
@@ -67,8 +68,10 @@ const columns: ColumnDef<Shipment>[] = [
           className={`inline-flex rounded-full px-2.5 py-0.5 text-xs font-semibold ${
             type === 'Reembolso'
               ? 'bg-red-100 text-red-800'
-              :               type === 'Stock Faltante'
+              : type === 'Stock Faltante'
               ? 'bg-gray-100 text-gray-800'
+              : type === 'Cancelado'
+              ? 'bg-orange-100 text-orange-800'
               : 'bg-muted text-muted-foreground'
           }`}
         >

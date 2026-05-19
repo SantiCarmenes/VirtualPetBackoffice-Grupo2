@@ -1,8 +1,7 @@
-import { getToken, removeToken } from './auth'
+import { getToken, getRefreshToken, setToken, setRefreshToken, removeAllTokens } from './auth'
 import { ApiError } from '@/types/shipment'
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-// TODO: change for production - Update API_BASE_URL with production IP/Port
 
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
@@ -38,6 +37,42 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+// Silent refresh logic
+let refreshPromise: Promise<string> | null = null
+
+async function performRefresh(): Promise<string> {
+  const refreshToken = getRefreshToken()
+  if (!refreshToken) {
+    throw new Error('No refresh token')
+  }
+
+  const response = await fetch(buildUrl('/auth/refresh'), {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ refreshToken }),
+  })
+
+  if (!response.ok) {
+    throw new Error('Refresh failed')
+  }
+
+  const data = await response.json()
+  setToken(data.accessToken)
+  if (data.refreshToken) {
+    setRefreshToken(data.refreshToken)
+  }
+  return data.accessToken
+}
+
+function getRefreshedToken(): Promise<string> {
+  if (!refreshPromise) {
+    refreshPromise = performRefresh().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
 export async function apiClient<T>(
   path: string,
   config: RequestConfig = {}
@@ -62,9 +97,24 @@ export async function apiClient<T>(
   })
 
   if (response.status === 401) {
-    removeToken()
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+    try {
+      const newToken = await getRefreshedToken()
+
+      const retryResponse = await fetch(url, {
+        ...restConfig,
+        headers: {
+          ...headers,
+          Authorization: `Bearer ${newToken}`,
+        },
+      })
+
+      return handleResponse<T>(retryResponse)
+    } catch {
+      removeAllTokens()
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+      throw new Error('Unauthorized')
     }
   }
 

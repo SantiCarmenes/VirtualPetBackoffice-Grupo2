@@ -1,11 +1,16 @@
 'use client'
 
-import { useIssues } from '@/hooks/useIssues'
+import { useState } from 'react'
+import { useShipments } from '@/hooks/useShipments'
 import { IssuesTable } from '@/components/issues/issues-table'
+import { Pagination } from '@/components/ui/pagination'
 import { Loader2 } from 'lucide-react'
 
 export default function IssuesPage() {
-  const { data, isLoading } = useIssues()
+  const [page, setPage] = useState(1)
+  const limit = 20
+
+  const { data, isLoading } = useShipments({ status: 'CANCELLED', page, limit })
 
   return (
     <div className="space-y-6">
@@ -13,7 +18,7 @@ export default function IssuesPage() {
         <div>
           <h1 className="text-2xl font-bold">Gestión de Incidencias</h1>
           <p className="text-sm text-muted-foreground">
-            Envíos que requieren reembolso o con stock faltante
+            Pedidos cancelados y problemas de envío
           </p>
         </div>
         <div className="text-sm text-muted-foreground">
@@ -21,37 +26,24 @@ export default function IssuesPage() {
         </div>
       </div>
 
-      {/* Issue Type Summary */}
-      {!isLoading && data?.data && (
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-          <div className="rounded-lg border bg-card p-4">
-            <div className="text-2xl font-bold text-red-600">
-              {data.data.filter((s) => s.status === 'TOTAL_REFUND').length}
-            </div>
-            <div className="text-xs text-muted-foreground">Reembolsos Totales</div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="text-2xl font-bold text-red-600">
-              {data.data.filter((s) => s.status === 'PARTIAL_REFUND').length}
-            </div>
-            <div className="text-xs text-muted-foreground">Reembolsos Parciales</div>
-          </div>
-          <div className="rounded-lg border bg-card p-4">
-            <div className="text-2xl font-bold text-gray-600">
-              {data.data.filter((s) => s.status === 'MISSING_STOCK').length}
-            </div>
-            <div className="text-xs text-muted-foreground">Stock Faltante</div>
-          </div>
-        </div>
-      )}
-
       {/* Table */}
       {isLoading ? (
         <div className="flex h-64 items-center justify-center">
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <IssuesTable data={data?.data ?? []} />
+        <>
+          <IssuesTable data={data?.data ?? []} />
+          {data && data.pages > 1 && (
+            <Pagination
+              page={data.page}
+              pages={data.pages}
+              total={data.total}
+              limit={data.limit}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </div>
   )

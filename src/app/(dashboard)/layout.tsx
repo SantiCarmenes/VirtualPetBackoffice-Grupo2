@@ -52,8 +52,7 @@ export default function DashboardLayout({
         </nav>
         <div className="border-t p-4">
           <div className="mb-2 text-xs text-muted-foreground">
-            {/* TODO: activate login - revert to: {user?.name || user?.email || 'Loading...'} */}
-            {user?.name || user?.email || 'Usuario Admin'}
+            {user?.firstName || user?.email || 'Cargando...'}
           </div>
           <Button variant="outline" className="w-full justify-start gap-2" onClick={logout}>
             <LogOut className="h-4 w-4" />

@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { useShipments } from '@/hooks/useShipments'
 import { ShipmentsTable } from '@/components/shipments/shipments-table'
+import { Pagination } from '@/components/ui/pagination'
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -10,7 +11,15 @@ import { NON_PENDING_STATUSES, ShipmentStatus, STATUS_LABELS } from '@/types/shi
 
 export default function ShipmentsPage() {
   const [statusFilter, setStatusFilter] = useState<ShipmentStatus | undefined>(undefined)
-  const { data, isLoading } = useShipments({ status: statusFilter })
+  const [page, setPage] = useState(1)
+  const limit = 20
+
+  const { data, isLoading } = useShipments({ status: statusFilter, page, limit })
+
+  function handleStatusChange(status: ShipmentStatus | undefined) {
+    setStatusFilter(status)
+    setPage(1)
+  }
 
   return (
     <div className="space-y-6">
@@ -26,7 +35,7 @@ export default function ShipmentsPage() {
         <Button
           variant={statusFilter === undefined ? 'default' : 'outline'}
           size="sm"
-          onClick={() => setStatusFilter(undefined)}
+          onClick={() => handleStatusChange(undefined)}
         >
           Todos
         </Button>
@@ -35,7 +44,7 @@ export default function ShipmentsPage() {
             key={status}
             variant={statusFilter === status ? 'default' : 'outline'}
             size="sm"
-            onClick={() => setStatusFilter(status)}
+            onClick={() => handleStatusChange(status)}
             className={cn(
               statusFilter !== status && 'text-muted-foreground'
             )}
@@ -51,7 +60,18 @@ export default function ShipmentsPage() {
           <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
         </div>
       ) : (
-        <ShipmentsTable data={data?.data ?? []} />
+        <>
+          <ShipmentsTable data={data?.data ?? []} />
+          {data && data.pages > 1 && (
+            <Pagination
+              page={data.page}
+              pages={data.pages}
+              total={data.total}
+              limit={data.limit}
+              onPageChange={setPage}
+            />
+          )}
+        </>
       )}
     </div>
   )

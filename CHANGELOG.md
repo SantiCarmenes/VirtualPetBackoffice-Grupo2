@@ -333,3 +333,153 @@ Cuando el operario completa el empaque (shipping status `PENDING` → `PROCESSIN
 - **Build exitoso**: 9 rutas, 0 errores TypeScript
 - **Middleware activo**: Redirige usuarios no autenticados a `/login`
 
+---
+
+## 2025-05-21 — Server-Side Auth + SSR Data Fetching
+
+### Contexto
+El proyecto tenía dos problemas críticos:
+1. **CORS**: El frontend en Docker (`localhost:3000`) no podía comunicarse con la API en Vercel (`api-virtualpet.vercel.app`) desde el browser debido a políticas de Same Origin y falta de headers `Access-Control-Allow-Origin`.
+2. **Performance**: Las páginas protegidas (`/dashboard`, `/shipments`, etc.) llegaban vacías al browser y dependían de múltiples fetches client-side, causando pantallas en blanco de hasta 13 segundos en la primera carga.
+
+Esta sesión migró la autenticación a cookies `httpOnly` y convirtió todas las páginas principales a **Server Components** con prefetch de datos e hidratación de React Query.
+
+---
+
+### Fase 1: Auth Infrastructure (Cookie-Based)
+
+#### Decisiones Arquitectónicas
+
+1. **API Proxy Local**: Todas las llamadas a la API externa ahora pasan por rutas internas de Next.js (`/api/proxy/*`, `/api/auth/*`). Esto elimina CORS completamente porque el browser solo habla con `localhost:3000`.
+2. **Cookies `httpOnly`**: Los tokens ya no se guardan en `localStorage`. El proxy `/api/auth/login` recibe `accessToken` + `refreshToken` de la API externa y los almacena en cookies seguras (`httpOnly`, `SameSite=Lax`). El `apiClient` del lado del cliente nunca ve el token directamente.
+3. **Middleware activado**: `middleware.ts` lee cookies (`vp_access_token`, `vp_refresh_token`) y redirige usuarios sin sesión a `/login` antes de que Next.js renderice la página.
+4. **Fallback de refresh expirado (Opción A)**: Si un Server Component encuentra un `accessToken` expirado, no intenta refresh silencioso. Simplemente redirige a `/login` (`serverApi.ts` → `redirect('/login')`). El refresh silencioso sigue existiendo en el cliente (`apiClient.ts`).
+
+#### Endpoints Proxy Creados
+
+| Proxy Local | Método | Destino Vercel | Función |
+|-------------|--------|----------------|---------|
+| `/api/auth/login` | POST | `/auth/login` | Login + set cookies `httpOnly` |
+| `/api/auth/logout` | POST | `/auth/logout` | Logout + clear cookies |
+| `/api/auth/refresh` | POST | `/auth/refresh` | Refresh token + update cookies |
+| `/api/auth/me` | GET | `/users/me` | Perfil del usuario autenticado |
+| `/api/proxy/[...path]` | ANY | `/*` | Proxy genérico para todos los endpoints de datos |
+
+#### Flujo de Autenticación (Nuevo)
+
+```
+Browser ──POST /api/auth/login──► Next.js Proxy ──POST /auth/login──► Vercel API
+                                          │                              │
+                                          │◄── { accessToken, refreshToken }┘
+                                          │
+                                   Set cookies httpOnly
+                                          │
+                                   Browser ya tiene sesión
+                                   (cookie automática en cada request)
+```
+
+---
+
+### Fase 2+3: SSR Data Fetching + Client Islands
+
+#### Decisiones Arquitectónicas
+
+1. **Hybrid SSR + React Query**: Las páginas ahora son Server Components que prefetchean datos en el servidor (usando `cookies()` para auth) y los inyectan al cliente vía `<HydrationBoundary>` de TanStack Query. Los componentes interactivos (filtros, paginación, tablas) siguen siendo Client Components.
+2. **Eliminación de CORS**: Los Server Components hacen requests directamente a `https://api-virtualpet.vercel.app/api` desde Node.js (server-to-server), donde no existe Same Origin Policy. Los Client Components hablan con `/api/proxy/*` (same origin).
+3. **Separación de responsabilidades**:
+   - `page.tsx` → Server Component: prefetch de datos, auth check, dehydrate
+   - `*-content.tsx` → Client Component: UI interactiva, React Query hooks, filtros
+
+#### Páginas Refactorizadas
+
+| Página | Server Prefetch | Client Content | Datos Iniciales |
+|--------|-----------------|----------------|-----------------|
+| `/dashboard` | `getServerShipments()` + `getServerIssues()` | `dashboard-content.tsx` | Contadores + tarjetas |
+| `/shipments` | `getServerShipments({ page: 1, limit: 20 })` | `shipments-content.tsx` | Tabla + filtros |
+| `/pending` | `getServerShipments({ status: 'PENDING', page: 1 })` | `pending-content.tsx` | Tabla pendientes |
+| `/issues` | `getServerShipments({ status: 'CANCELLED', page: 1 })` | `issues-content.tsx` | Tabla cancelados |
+
+---
+
+### Fase 4: Layout Refactor (Server Component)
+
+1. **`src/app/(dashboard)/layout.tsx`** convertido a **Server Component**.
+2. Lógica de sidebar, navegación activa, y auth UI extraída a **`src/components/dashboard-nav.tsx`** (Client Component).
+3. El layout del servidor simplemente renderiza `<DashboardNav>{children}</DashboardNav>`, sin ejecutar hooks en el servidor.
+
+---
+
+### Archivos Creados
+
+- `src/lib/config.ts` — URL base de la API centralizada
+- `src/lib/serverApi.ts` — `serverFetch()` para Server Components (lee cookies, 401 → redirect)
+- `src/lib/serverData.ts` — Helpers `getServerShipments()` y `getServerIssues()`
+- `src/lib/shipmentMappers.ts` — Mappers extraídos de `shipmentService.ts` para reutilización server/client
+- `src/components/hydration-wrapper.tsx` — Bridge `<HydrationBoundary>` para SSR + React Query
+- `src/components/dashboard-nav.tsx` — Sidebar + mobile nav (Client Component)
+- `src/app/api/auth/login/route.ts` — Proxy de login con set cookies
+- `src/app/api/auth/logout/route.ts` — Proxy de logout con clear cookies
+- `src/app/api/auth/refresh/route.ts` — Proxy de refresh con update cookies
+- `src/app/api/auth/me/route.ts` — Proxy de `/users/me`
+- `src/app/api/proxy/[...path]/route.ts` — Proxy genérico para todos los endpoints de datos
+- `src/app/(dashboard)/dashboard/dashboard-content.tsx` — UI del dashboard (Client)
+- `src/app/(dashboard)/shipments/shipments-content.tsx` — UI de envíos (Client)
+- `src/app/(dashboard)/pending/pending-content.tsx` — UI de pendientes (Client)
+- `src/app/(dashboard)/issues/issues-content.tsx` — UI de incidencias (Client)
+
+### Archivos Modificados
+
+- `.env.local` — Agregado `/api` al final de `NEXT_PUBLIC_API_URL`
+- `src/lib/apiClient.ts` — Ahora apunta a `/api/proxy/*` en vez de la URL externa directamente. Refresh a `/api/auth/refresh`. Removido `localStorage`.
+- `src/lib/auth.ts` — Helpers de `localStorage` deprecados (ya no son source of truth). Mantenidos por compatibilidad transitoria.
+- `src/services/authService.ts` — Ahora apunta a `/api/auth/*` en vez de la API externa directamente.
+- `src/services/shipmentService.ts` — Mappers extraídos a `shipmentMappers.ts`.
+- `src/hooks/useAuth.ts` — Removidas todas las llamadas a `localStorage`. `isAuthenticated` ahora se deriva de `!!user` (del hook `me`).
+- `src/middleware.ts` — Descomentado y activado. Lee cookies en vez de `localStorage`.
+- `src/app/(dashboard)/layout.tsx` — Convertido a Server Component.
+- `src/app/(dashboard)/dashboard/page.tsx` — Convertido a Server Component con prefetch.
+- `src/app/(dashboard)/shipments/page.tsx` — Convertido a Server Component con prefetch.
+- `src/app/(dashboard)/pending/page.tsx` — Convertido a Server Component con prefetch.
+- `src/app/(dashboard)/issues/page.tsx` — Convertido a Server Component con prefetch.
+
+---
+
+### Docker / Compose
+
+- `docker-compose.yml` — Creado para levantar el contenedor con `.env.local` montado (`env_file: - .env.local`). Esto asegura que `NEXT_PUBLIC_API_URL` esté disponible en runtime.
+
+---
+
+### Estado Actual de Conectividad
+
+| Feature | Estado | Ruta |
+|---------|--------|------|
+| Login / Logout | ✅ Proxy Local | `/api/auth/login`, `/api/auth/logout` |
+| Perfil de usuario | ✅ Proxy Local | `/api/auth/me` |
+| Silent token refresh | ✅ Proxy Local | `/api/auth/refresh` |
+| Listar pedidos | ✅ SSR (server-to-server) | `getServerShipments()` |
+| Detalle de pedido | ✅ SSR (server-to-server) | `serverFetch('/orders/:id')` |
+| Actualizar estado de pedido | ✅ Proxy Local | `/api/proxy/orders/:id/status` |
+| Crear envío | ✅ Proxy Local | `/api/proxy/shipping` |
+| Obtener envío por orden | ✅ Proxy Local | `/api/proxy/shipping/orders/:orderId` |
+| Actualizar estado de envío | ✅ Proxy Local | `/api/proxy/shipping/orders/:orderId/status` |
+| Métodos de envío | ✅ Proxy Local | `/api/proxy/shipping/methods` |
+| Estado de pago | ✅ Proxy Local | `/api/proxy/payment/orders/:orderId` |
+| Middleware de autenticación | ✅ Activo | `middleware.ts` |
+
+---
+
+### Limitaciones Conocidas / Deuda Técnica (Actualizadas)
+
+1. **Token refresh en Server Components**: Si el `accessToken` expira mientras el usuario navega entre páginas protegidas, el Server Component redirige a `/login` en vez de refrescar silenciosamente. El cliente (`apiClient.ts`) sí hace refresh silencioso. Una mejora futura sería intentar refresh desde el servidor usando `vp_refresh_token` antes de redirigir.
+2. **localStorage legacy**: `src/lib/auth.ts` aún contiene helpers de `localStorage` por compatibilidad transitoria. Se pueden remover en una sesión futura una vez confirmado que nada depende de ellos.
+3. **SameSite=Lax**: Las cookies usan `SameSite=Lax`. Esto funciona para navegación normal, pero si se necesita hacer requests cross-site desde iframes o POSTs externos, debería cambiarse a `SameSite=None; Secure`.
+
+---
+
+## Notas de Build
+
+- **Next.js 14.1.4** — App Router
+- **Build exitoso**: 9 rutas, 0 errores TypeScript
+- **Middleware activo**: Redirige usuarios no autenticados a `/login`
+

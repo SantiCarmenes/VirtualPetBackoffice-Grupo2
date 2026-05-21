@@ -1,25 +1,42 @@
-import { apiClient } from '@/lib/apiClient'
-import { getRefreshToken } from '@/lib/auth'
-import { AuthCredentials, AuthTokens, User } from '@/types/shipment'
+import { AuthCredentials, User } from '@/types/shipment'
 
 export const authService = {
-  async login(credentials: AuthCredentials): Promise<AuthTokens> {
-    return apiClient<AuthTokens>('/auth/login', {
+  async login(credentials: AuthCredentials): Promise<void> {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Login failed')
+    }
+
+    await res.json()
   },
 
   async logout(): Promise<void> {
-    const refreshToken = getRefreshToken()
-
-    return apiClient<void>('/auth/logout', {
+    const res = await fetch('/api/auth/logout', {
       method: 'POST',
-      body: JSON.stringify({ refreshToken }),
     })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Logout failed')
+    }
   },
 
   async me(): Promise<User> {
-    return apiClient<User>('/users/me')
+    const res = await fetch('/api/auth/me', {
+      method: 'GET',
+    })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Not authenticated')
+    }
+
+    return res.json()
   },
 }

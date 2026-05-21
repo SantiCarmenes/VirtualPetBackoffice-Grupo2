@@ -1,58 +1,7 @@
 import { orderService } from './orderService'
 import { shippingService } from './shippingService'
-import { OrderStatus, Shipment, ShipmentStatus, ShippingApiStatus } from '@/types/shipment'
-
-function mapOrderStatus(orderStatus: OrderStatus, shippingStatus?: ShippingApiStatus): ShipmentStatus {
-  if (orderStatus === 'CANCELLED') return 'CANCELLED'
-  if (orderStatus === 'DELIVERED') return 'DELIVERED'
-  if (orderStatus === 'SHIPPED') return 'IN_TRANSIT'
-  if (orderStatus === 'CONFIRMED') {
-    if (!shippingStatus) return 'PENDING'
-    if (shippingStatus === 'PENDING') return 'PENDING'
-    if (shippingStatus === 'PROCESSING') return 'PENDING'
-    return 'PENDING'
-  }
-  return 'PENDING'
-}
-
-function mapOrderToShipment(order: Awaited<ReturnType<typeof orderService.getOrderById>>, shippingRecord?: Awaited<ReturnType<typeof shippingService.getShippingByOrderId>>): Shipment {
-  return {
-    id: order.id,
-    orderId: order.id.slice(0, 8).toUpperCase(),
-    customerName: order.customerName,
-    customerEmail: order.customerEmail,
-    shippingAddress: order.shippingAddress,
-    status: mapOrderStatus(order.status, shippingRecord?.status),
-    products: order.items.map((item) => ({
-      id: item.variantId,
-      name: item.productNameSnapshot,
-      sku: item.variantId.slice(0, 8).toUpperCase(),
-      quantity: item.quantity,
-      packed: false,
-    })),
-    createdAt: order.createdAt,
-    updatedAt: order.createdAt,
-    shippingId: shippingRecord?.id,
-    shippingStatus: shippingRecord?.status,
-    shippingMethodName: undefined,
-    shippingEstimatedDelivery: shippingRecord?.estimatedDelivery,
-  }
-}
-
-function mapOrderStatusToQuery(status?: ShipmentStatus): OrderStatus | undefined {
-  switch (status) {
-    case 'PENDING':
-      return 'CONFIRMED'
-    case 'IN_TRANSIT':
-      return 'SHIPPED'
-    case 'DELIVERED':
-      return 'DELIVERED'
-    case 'CANCELLED':
-      return 'CANCELLED'
-    default:
-      return undefined
-  }
-}
+import { Shipment, ShipmentStatus } from '@/types/shipment'
+import { mapOrderToShipment, mapOrderStatusToQuery } from '@/lib/shipmentMappers'
 
 interface GetShipmentsParams {
   status?: ShipmentStatus

@@ -2,7 +2,8 @@ import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
 export function middleware(request: NextRequest) {
-  const token = request.cookies.get('vp_backoffice_token')?.value
+  const accessToken = request.cookies.get('vp_access_token')?.value
+  const refreshToken = request.cookies.get('vp_refresh_token')?.value
 
   const { pathname } = request.nextUrl
   const isAuthPage = pathname === '/login'
@@ -12,12 +13,14 @@ export function middleware(request: NextRequest) {
     pathname.startsWith('/issues') ||
     pathname.startsWith('/pending')
 
-  if (!token && isProtectedPage) {
+  const hasToken = !!accessToken || !!refreshToken
+
+  if (!hasToken && isProtectedPage) {
     return NextResponse.redirect(new URL('/login', request.url))
   }
 
-  if (token && isAuthPage) {
-    return NextResponse.redirect(new URL('/shipments', request.url))
+  if (hasToken && isAuthPage) {
+   return NextResponse.redirect(new URL('/dashboard', request.url))
   }
 
   return NextResponse.next()

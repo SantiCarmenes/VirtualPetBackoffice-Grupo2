@@ -4,7 +4,6 @@ import { useCallback } from 'react'
 import { useRouter } from 'next/navigation'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { authService } from '@/services/authService'
-import { setToken, setRefreshToken, removeAllTokens, isAuthenticated } from '@/lib/auth'
 import { toast } from 'sonner'
 
 export function useAuth() {
@@ -13,23 +12,17 @@ export function useAuth() {
 
   const { data: user, isLoading } = useQuery({
     queryKey: ['auth', 'me'],
-    queryFn: () => {
-      if (!isAuthenticated()) return null
-      return authService.me()
-    },
+    queryFn: () => authService.me(),
     retry: false,
   })
 
   const loginMutation = useMutation({
     mutationFn: authService.login,
-    onSuccess: async (data) => {
-      setToken(data.accessToken)
-      setRefreshToken(data.refreshToken)
-
+    onSuccess: async () => {
       try {
         const user = await authService.me()
         if (user.role !== 'BACKOFFICE') {
-          removeAllTokens()
+          await authService.logout()
           queryClient.clear()
           toast.error('Usuario o contraseña inválidos')
           return
@@ -37,7 +30,7 @@ export function useAuth() {
         queryClient.invalidateQueries({ queryKey: ['auth'] })
         router.push('/dashboard')
       } catch {
-        removeAllTokens()
+        await authService.logout()
         queryClient.clear()
         toast.error('Usuario o contraseña inválidos')
       }
@@ -50,12 +43,10 @@ export function useAuth() {
   const logoutMutation = useMutation({
     mutationFn: authService.logout,
     onSuccess: () => {
-      removeAllTokens()
       queryClient.clear()
       router.push('/login')
     },
     onError: () => {
-      removeAllTokens()
       queryClient.clear()
       router.push('/login')
     },
@@ -68,7 +59,7 @@ export function useAuth() {
   return {
     user,
     isLoading,
-    isAuthenticated: isAuthenticated(),
+    isAuthenticated: !!user,
     login: loginMutation.mutate,
     isLoggingIn: loginMutation.isPending,
     loginError: loginMutation.error,

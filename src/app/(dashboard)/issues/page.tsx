@@ -1,50 +1,19 @@
-'use client'
+import { QueryClient, dehydrate } from '@tanstack/react-query'
+import { HydrationWrapper } from '@/components/hydration-wrapper'
+import { getServerShipments } from '@/lib/serverData'
+import IssuesContent from './issues-content'
 
-import { useState } from 'react'
-import { useShipments } from '@/hooks/useShipments'
-import { IssuesTable } from '@/components/issues/issues-table'
-import { Pagination } from '@/components/ui/pagination'
-import { Loader2 } from 'lucide-react'
+export default async function IssuesPage() {
+  const queryClient = new QueryClient()
 
-export default function IssuesPage() {
-  const [page, setPage] = useState(1)
-  const limit = 20
-
-  const { data, isLoading } = useShipments({ status: 'CANCELLED', page, limit })
+  await queryClient.prefetchQuery({
+    queryKey: ['shipments', { status: 'CANCELLED', page: 1, limit: 20 }],
+    queryFn: () => getServerShipments({ status: 'CANCELLED', page: 1, limit: 20 }),
+  })
 
   return (
-    <div className="space-y-6">
-      <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 className="text-2xl font-bold">Gestión de Incidencias</h1>
-          <p className="text-sm text-muted-foreground">
-            Pedidos cancelados y problemas de envío
-          </p>
-        </div>
-        <div className="text-sm text-muted-foreground">
-          {data?.total ?? 0} incidencias
-        </div>
-      </div>
-
-      {/* Table */}
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <>
-          <IssuesTable data={data?.data ?? []} />
-          {data && data.pages > 1 && (
-            <Pagination
-              page={data.page}
-              pages={data.pages}
-              total={data.total}
-              limit={data.limit}
-              onPageChange={setPage}
-            />
-          )}
-        </>
-      )}
-    </div>
+    <HydrationWrapper state={dehydrate(queryClient)}>
+      <IssuesContent />
+    </HydrationWrapper>
   )
 }

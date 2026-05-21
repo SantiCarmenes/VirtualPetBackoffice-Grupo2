@@ -1,14 +1,11 @@
-import { getToken, getRefreshToken, setToken, setRefreshToken, removeAllTokens } from './auth'
 import { ApiError } from '@/types/shipment'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
 
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(path, API_BASE_URL)
+  const url = new URL(`/api/proxy${path}`, window.location.origin)
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -38,33 +35,20 @@ async function handleResponse<T>(response: Response): Promise<T> {
 }
 
 // Silent refresh logic
-let refreshPromise: Promise<string> | null = null
+let refreshPromise: Promise<void> | null = null
 
-async function performRefresh(): Promise<string> {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) {
-    throw new Error('No refresh token')
-  }
-
-  const response = await fetch(buildUrl('/auth/refresh'), {
+async function performRefresh(): Promise<void> {
+  const response = await fetch('/api/auth/refresh', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ refreshToken }),
   })
 
   if (!response.ok) {
     throw new Error('Refresh failed')
   }
-
-  const data = await response.json()
-  setToken(data.accessToken)
-  if (data.refreshToken) {
-    setRefreshToken(data.refreshToken)
-  }
-  return data.accessToken
 }
 
-function getRefreshedToken(): Promise<string> {
+function getRefreshOperation(): Promise<void> {
   if (!refreshPromise) {
     refreshPromise = performRefresh().finally(() => {
       refreshPromise = null
@@ -80,15 +64,9 @@ export async function apiClient<T>(
   const { params, ...restConfig } = config
   const url = buildUrl(path, params)
 
-  const token = getToken()
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((restConfig.headers as Record<string, string>) || {}),
-  }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(url, {
@@ -98,19 +76,15 @@ export async function apiClient<T>(
 
   if (response.status === 401) {
     try {
-      const newToken = await getRefreshedToken()
+      await getRefreshOperation()
 
       const retryResponse = await fetch(url, {
         ...restConfig,
-        headers: {
-          ...headers,
-          Authorization: `Bearer ${newToken}`,
-        },
+        headers,
       })
 
       return handleResponse<T>(retryResponse)
     } catch {
-      removeAllTokens()
       if (typeof window !== 'undefined') {
         window.location.href = '/login'
       }

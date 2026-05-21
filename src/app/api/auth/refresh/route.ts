@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/lib/config'
 export async function POST() {
   try {
     const cookieStore = cookies()
-    const refreshToken = cookieStore.get('vp_refresh_token')?.value
+    const refreshToken = cookieStore.get('refresh_token')?.value
 
     if (!refreshToken) {
       return NextResponse.json({ message: 'No refresh token' }, { status: 401 })
@@ -19,8 +19,8 @@ export async function POST() {
 
     if (!res.ok) {
       const response = NextResponse.json({ message: 'Refresh failed' }, { status: 401 })
-      response.cookies.set('vp_access_token', '', { httpOnly: true, maxAge: 0, path: '/' })
-      response.cookies.set('vp_refresh_token', '', { httpOnly: true, maxAge: 0, path: '/' })
+      response.cookies.set('access_token', '', { httpOnly: true, maxAge: 0, path: '/' })
+      response.cookies.set('refresh_token', '', { httpOnly: true, maxAge: 0, path: '/' })
       return response
     }
 
@@ -28,7 +28,7 @@ export async function POST() {
 
     const response = NextResponse.json({ accessToken: data.accessToken })
 
-    response.cookies.set('vp_access_token', data.accessToken, {
+    response.cookies.set('access_token', data.accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -37,7 +37,7 @@ export async function POST() {
     })
 
     if (data.refreshToken) {
-      response.cookies.set('vp_refresh_token', data.refreshToken, {
+      response.cookies.set('refresh_token', data.refreshToken, {
         httpOnly: true,
         secure: process.env.NODE_ENV === 'production',
         sameSite: 'lax',

@@ -1,4 +1,4 @@
-import { getServerOrders } from '@/lib/serverData'
+import { getServerOrderStats } from '@/lib/serverData'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Package, Truck, CheckCircle, ClipboardList } from 'lucide-react'
@@ -6,53 +6,46 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 export default async function DashboardPage() {
-  const response = await getServerOrders({ limit: 10000 })
-  const orders = response.data
+  const stats = await getServerOrderStats()
 
-  const total = response.pagination.total
-  const pending = orders.filter((o) => o.status === 'PENDING' || o.status === 'CONFIRMED').length
-  const inTransit = orders.filter((o) => o.status === 'SHIPPED').length
-  const finalized = orders.filter((o) => o.status === 'DELIVERED' || o.status === 'CANCELLED').length
+  const pending   = stats.RECEIVED + stats.IN_PREPARATION
+  const inTransit = stats.IN_TRANSIT + stats.NOT_DELIVERED
+  const finalized = stats.DELIVERED + stats.CANCELLED
+  const total     = stats.total
 
   const STATUSES = [
     {
       key: 'pending',
       label: 'Pendientes',
-      sublabel: 'Esperando preparación',
-      href: '/pending',
+      sublabel: 'Recibidos y en preparación',
+      href: '/orders?status=RECEIVED',
       icon: Package,
       count: pending,
-      color: 'status-pending',
       borderColor: 'border-status-pending',
       bgColor: 'bg-status-pending',
       textColor: 'text-status-pending',
-      mutedBg: 'bg-status-pending-muted',
     },
     {
       key: 'inTransit',
-      label: 'En Tránsito',
-      sublabel: 'En camino',
-      href: '/orders?status=SHIPPED',
+      label: 'En Camino',
+      sublabel: 'En tránsito o con reintento',
+      href: '/orders?status=IN_TRANSIT',
       icon: Truck,
       count: inTransit,
-      color: 'status-in-transit',
       borderColor: 'border-status-in-transit',
       bgColor: 'bg-status-in-transit',
       textColor: 'text-status-in-transit',
-      mutedBg: 'bg-status-in-transit-muted',
     },
     {
       key: 'finalized',
       label: 'Finalizados',
-      sublabel: 'Completados o cancelados',
-      href: '/orders',
+      sublabel: 'Entregados o cancelados',
+      href: '/orders?status=DELIVERED',
       icon: CheckCircle,
       count: finalized,
-      color: 'status-delivered',
       borderColor: 'border-status-delivered',
       bgColor: 'bg-status-delivered',
       textColor: 'text-status-delivered',
-      mutedBg: 'bg-status-delivered-muted',
     },
     {
       key: 'total',
@@ -61,11 +54,9 @@ export default async function DashboardPage() {
       href: '/orders',
       icon: ClipboardList,
       count: total,
-      color: 'primary',
       borderColor: 'border-primary',
       bgColor: 'bg-primary',
       textColor: 'text-primary',
-      mutedBg: 'bg-primary/10',
     },
   ]
 
@@ -76,12 +67,9 @@ export default async function DashboardPage() {
         <p className="text-sm text-muted-foreground">Resumen de tus operaciones de envío</p>
       </div>
 
-      {/* Summary Cards */}
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         {STATUSES.map((status) => {
           const Icon = status.icon
-          const count = status.count
-
           return (
             <Link href={status.href} key={status.key}>
               <Card
@@ -105,7 +93,7 @@ export default async function DashboardPage() {
                 </CardHeader>
                 <CardContent>
                   <div className={cn('text-3xl font-bold tracking-tight', status.textColor)}>
-                    {count}
+                    {status.count}
                   </div>
                   <p className="text-xs text-muted-foreground">{status.sublabel}</p>
                 </CardContent>
@@ -115,16 +103,25 @@ export default async function DashboardPage() {
         })}
       </div>
 
-      {/* Quick Actions */}
       <div className="flex flex-wrap gap-2">
-        <Link href="/pending">
+        <Link href="/orders?status=RECEIVED">
           <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
-            Ver Pendientes
+            Ver Recibidos
           </Button>
         </Link>
-        <Link href="/orders">
+        <Link href="/orders?status=IN_PREPARATION">
+          <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
+            Ver En Preparación
+          </Button>
+        </Link>
+        <Link href="/orders?status=IN_TRANSIT">
           <Button variant="outline" className="border-status-in-transit text-status-in-transit hover:bg-status-in-transit-muted">
-            Ver Pedidos
+            Ver En Camino
+          </Button>
+        </Link>
+        <Link href="/orders?status=NOT_DELIVERED">
+          <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50">
+            Ver No Entregados
           </Button>
         </Link>
       </div>

@@ -5,7 +5,7 @@ import { API_BASE_URL } from '@/lib/config'
 export async function POST() {
   try {
     const cookieStore = cookies()
-    const refreshToken = cookieStore.get('vp_refresh_token')?.value
+    const refreshToken = cookieStore.get('refresh_token')?.value
 
     if (refreshToken) {
       await fetch(`${API_BASE_URL}/auth/logout`, {
@@ -17,7 +17,7 @@ export async function POST() {
 
     const response = NextResponse.json({ success: true })
 
-    response.cookies.set('vp_access_token', '', {
+    response.cookies.set('access_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -25,7 +25,7 @@ export async function POST() {
       path: '/',
     })
 
-    response.cookies.set('vp_refresh_token', '', {
+    response.cookies.set('refresh_token', '', {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

@@ -3,98 +3,123 @@
 @tailwind utilities;
 
 @layer base {
+  /* =====================================================
+     Para cambiar colores: editar solo esta sección.
+     ===================================================== */
   :root {
-    /* Brand: Deep Navy / Indigo */
-    --background: 98% 0.005 250;
-    --foreground: 20% 0.02 250;
+    --background: #FAFAF9;
+    --foreground: #1C1917;
 
-    --card: 100% 0 0;
-    --card-foreground: 20% 0.02 250;
+    --primary: #1C1917;
+    --primary-hover: #292524;
+    --primary-foreground: #FAFAF9;
 
-    --popover: 100% 0 0;
-    --popover-foreground: 20% 0.02 250;
+    --secondary: #E7E5E4;
+    --secondary-hover: #D6D3D1;
+    --secondary-foreground: #1C1917;
 
-    --primary: 28% 0.07 250;
-    --primary-foreground: 98% 0.005 250;
+    --accent: #F5F5F4;
+    --accent-foreground: #1C1917;
 
-    --secondary: 94% 0.01 250;
-    --secondary-foreground: 28% 0.07 250;
+    --muted: #F5F5F4;
+    --muted-foreground: #78716C;
 
-    --muted: 94% 0.01 250;
-    --muted-foreground: 55% 0.03 250;
+    --border: #E7E5E4;
+    --input: #E7E5E4;
+    --ring: #A8A29E;
 
-    --accent: 94% 0.01 250;
-    --accent-foreground: 28% 0.07 250;
+    --card: #FFFFFF;
+    --card-foreground: #1C1917;
 
-    --destructive: 55% 0.2 25;
-    --destructive-foreground: 98% 0.005 250;
+    --popover: #FFFFFF;
+    --popover-foreground: #1C1917;
 
-    --border: 88% 0.02 250;
-    --input: 88% 0.02 250;
-    --ring: 28% 0.07 250;
+    --destructive: #DC2626;
+    --destructive-foreground: #FAFAF9;
+
     --radius: 0.5rem;
 
-    /* Sidebar: Brand dark surface */
-    --sidebar: 18% 0.05 250;
-    --sidebar-foreground: 92% 0.01 250;
-    --sidebar-border: 25% 0.04 250;
-    --sidebar-ring: 50% 0.06 250;
-    --sidebar-accent: 25% 0.05 250;
-    --sidebar-accent-foreground: 98% 0.01 250;
+    /* Sidebar: fondo oscuro con texto claro */
+    --sidebar: #1C1917;
+    --sidebar-foreground: #FAFAF9;
+    --sidebar-border: #292524;
+    --sidebar-ring: #78716C;
+    --sidebar-accent: #292524;
+    --sidebar-accent-foreground: #FAFAF9;
 
     /* Status colors */
-    --status-pending: 65% 0.14 80;
-    --status-pending-foreground: 98% 0.01 80;
-    --status-pending-muted: 95% 0.03 80;
+    --status-pending: #F59E0B;
+    --status-pending-foreground: #FFFFFF;
+    --status-pending-muted: #FEF3C7;
 
-    --status-in-transit: 65% 0.12 210;
-    --status-in-transit-foreground: 98% 0.01 210;
-    --status-in-transit-muted: 95% 0.02 210;
+    --status-in-transit: #3B82F6;
+    --status-in-transit-foreground: #FFFFFF;
+    --status-in-transit-muted: #DBEAFE;
 
-    --status-delivered: 65% 0.12 150;
-    --status-delivered-foreground: 98% 0.01 150;
-    --status-delivered-muted: 95% 0.02 150;
+    --status-delivered: #10B981;
+    --status-delivered-foreground: #FFFFFF;
+    --status-delivered-muted: #D1FAE5;
 
-    --status-cancelled: 60% 0.18 25;
-    --status-cancelled-foreground: 98% 0.01 25;
-    --status-cancelled-muted: 95% 0.03 25;
+    --status-cancelled: #EF4444;
+    --status-cancelled-foreground: #FFFFFF;
+    --status-cancelled-muted: #FEE2E2;
   }
 
-  .dark {
-    --background: 15% 0.03 250;
-    --foreground: 94% 0.01 250;
+  :root[class~="dark"] {
+    --background: #0C0A09;
+    --foreground: #FAFAF9;
 
-    --card: 18% 0.04 250;
-    --card-foreground: 94% 0.01 250;
+    --primary: #E7E5E4;
+    --primary-hover: #D6D3D1;
+    --primary-foreground: #1C1917;
 
-    --popover: 18% 0.04 250;
-    --popover-foreground: 94% 0.01 250;
+    --secondary: #2C2824;
+    --secondary-hover: #3D3733;
+    --secondary-foreground: #E7E5E4;
 
-    --primary: 60% 0.08 250;
-    --primary-foreground: 15% 0.03 250;
+    --accent: #131110;
+    --accent-foreground: #A8A29E;
 
-    --secondary: 25% 0.04 250;
-    --secondary-foreground: 94% 0.01 250;
+    --muted: #131110;
+    --muted-foreground: #78716C;
 
-    --muted: 25% 0.04 250;
-    --muted-foreground: 65% 0.03 250;
+    --border: #2C2824;
+    --input: #2C2824;
+    --ring: #78716C;
 
-    --accent: 25% 0.04 250;
-    --accent-foreground: 94% 0.01 250;
+    --card: #1E1A17;
+    --card-foreground: #FAFAF9;
 
-    --destructive: 45% 0.18 25;
-    --destructive-foreground: 98% 0.005 250;
+    --popover: #1E1A17;
+    --popover-foreground: #FAFAF9;
 
-    --border: 25% 0.04 250;
-    --input: 25% 0.04 250;
-    --ring: 60% 0.08 250;
+    --destructive: #EF4444;
+    --destructive-foreground: #FAFAF9;
 
-    --sidebar: 12% 0.03 250;
-    --sidebar-foreground: 90% 0.01 250;
-    --sidebar-border: 20% 0.04 250;
-    --sidebar-ring: 55% 0.06 250;
-    --sidebar-accent: 20% 0.04 250;
-    --sidebar-accent-foreground: 94% 0.01 250;
+    /* Sidebar dark mode */
+    --sidebar: #0C0A09;
+    --sidebar-foreground: #FAFAF9;
+    --sidebar-border: #2C2824;
+    --sidebar-ring: #78716C;
+    --sidebar-accent: #131110;
+    --sidebar-accent-foreground: #E7E5E4;
+
+    /* Status colors (dark mode) */
+    --status-pending: #D97706;
+    --status-pending-foreground: #FFFFFF;
+    --status-pending-muted: #292524;
+
+    --status-in-transit: #2563EB;
+    --status-in-transit-foreground: #FFFFFF;
+    --status-in-transit-muted: #1E1A17;
+
+    --status-delivered: #059669;
+    --status-delivered-foreground: #FFFFFF;
+    --status-delivered-muted: #1E1A17;
+
+    --status-cancelled: #DC2626;
+    --status-cancelled-foreground: #FFFFFF;
+    --status-cancelled-muted: #1E1A17;
   }
 }
 

@@ -6,7 +6,11 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode
 }) {
-  const user = await getServerUser().catch(() => null)
+  const user = await getServerUser().catch((e: unknown) => {
+    // Let Next.js redirect errors propagate (e.g. redirect('/login') on 401)
+    if (typeof e === 'object' && e !== null && 'digest' in e) throw e
+    return null
+  })
 
   return (
     <div className="flex min-h-screen">

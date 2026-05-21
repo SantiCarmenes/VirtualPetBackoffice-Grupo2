@@ -1,14 +1,5 @@
 import { serverFetch } from './serverApi'
-import {
-  Order,
-  OrdersResponse,
-  OrderStatus,
-  User,
-  ShippingRecord,
-  ShippingMethod,
-  Payment,
-  Warehouse,
-} from '@/types/order'
+import { Order, OrdersResponse, OrderStats, OrderStatus, User } from '@/types/order'
 
 interface GetOrdersParams {
   status?: OrderStatus
@@ -28,42 +19,24 @@ export async function getServerOrders(params?: GetOrdersParams): Promise<OrdersR
   const path = `/orders/all${queryString ? '?' + queryString : ''}`
 
   return serverFetch<OrdersResponse>(path, {
-    next: { revalidate: 1200, tags: ['orders'] },
-  })
+    next: { revalidate: 30, tags: ['orders'] },
+  } as RequestInit)
+}
+
+export async function getServerOrderStats(): Promise<OrderStats> {
+  return serverFetch<OrderStats>('/orders/stats', {
+    next: { revalidate: 30, tags: ['orders'] },
+  } as RequestInit)
 }
 
 export async function getServerOrderById(id: string): Promise<Order> {
-  return serverFetch<Order>(`/orders/${id}`)
+  return serverFetch<Order>(`/orders/${id}`, {
+    next: { tags: ['orders'] },
+  } as RequestInit)
 }
 
 export async function getServerUser(): Promise<User> {
-  return serverFetch<User>('/users/me')
-}
-
-export async function getServerShippingRecord(orderId: string): Promise<ShippingRecord | null> {
-  try {
-    return await serverFetch<ShippingRecord>(`/shipping/orders/${orderId}`)
-  } catch {
-    return null
-  }
-}
-
-export async function getServerShippingMethods(): Promise<ShippingMethod[]> {
-  return serverFetch<ShippingMethod[]>('/shipping/methods')
-}
-
-export async function getServerPayment(orderId: string): Promise<Payment | null> {
-  try {
-    return await serverFetch<Payment>(`/payment/orders/${orderId}`)
-  } catch {
-    return null
-  }
-}
-
-export async function getServerWarehouses(): Promise<Warehouse[]> {
-  return serverFetch<Warehouse[]>('/warehouses')
-}
-
-export async function getServerUsers(): Promise<User[]> {
-  return serverFetch<User[]>('/users')
+  return serverFetch<User>('/users/me', {
+    next: { revalidate: 3600 },
+  } as RequestInit)
 }

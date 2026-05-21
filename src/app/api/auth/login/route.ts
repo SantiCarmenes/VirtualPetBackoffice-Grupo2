@@ -24,7 +24,7 @@ export async function POST(request: Request) {
 
     const response = NextResponse.json(rest)
 
-    response.cookies.set('vp_access_token', accessToken, {
+    response.cookies.set('access_token', accessToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',
@@ -32,7 +32,7 @@ export async function POST(request: Request) {
       path: '/',
     })
 
-    response.cookies.set('vp_refresh_token', refreshToken, {
+    response.cookies.set('refresh_token', refreshToken, {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

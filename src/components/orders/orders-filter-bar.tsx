@@ -5,7 +5,14 @@ import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { OrderStatus, STATUS_LABELS } from '@/types/order'
 
-const ALL_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+const ALL_STATUSES: OrderStatus[] = [
+  'RECEIVED',
+  'IN_PREPARATION',
+  'IN_TRANSIT',
+  'NOT_DELIVERED',
+  'DELIVERED',
+  'CANCELLED',
+]
 
 export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus }) {
   const router = useRouter()
@@ -38,9 +45,7 @@ export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus
           variant={currentStatus === status ? 'default' : 'outline'}
           size="sm"
           onClick={() => setStatus(status)}
-          className={cn(
-            currentStatus !== status && 'text-muted-foreground'
-          )}
+          className={cn(currentStatus !== status && 'text-muted-foreground')}
         >
           {STATUS_LABELS[status]}
         </Button>

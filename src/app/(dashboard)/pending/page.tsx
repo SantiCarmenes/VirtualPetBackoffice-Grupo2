@@ -9,22 +9,16 @@ export default async function PendingPage({
 }) {
   const page = Number(searchParams.page) || 1
 
-  const data = await getServerOrders({ page, limit: 20 })
-
-  // Filter pending and confirmed on the server side by making separate requests
-  // But the backend doesn't support multiple statuses. We'll fetch all and filter for display.
-  // For accurate pagination, we need to fetch without status filter.
-  // Actually, the backend supports status filter, so we make two requests and merge.
-  // Better: just show all orders on this page or redirect to /orders?status=PENDING
+  const data = await getServerOrders({ status: 'RECEIVED', page, limit: 20 })
 
   return (
     <div className="space-y-6">
       <div className="rounded-lg border border-status-pending/20 bg-status-pending-muted/50 p-5">
         <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-status-pending">Pendientes</h1>
+            <h1 className="text-2xl font-bold text-status-pending">Recibidos</h1>
             <p className="text-sm text-muted-foreground">
-              Pedidos pendientes y confirmados
+              Pedidos recibidos que esperan preparación
             </p>
           </div>
           <div className="text-sm font-medium text-status-pending">

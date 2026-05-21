@@ -11,8 +11,8 @@ export async function middleware(request: NextRequest) {
     pathname.startsWith('/pending') ||
     pathname.startsWith('/orders')
 
-  const accessToken = request.cookies.get('vp_access_token')?.value
-  const refreshToken = request.cookies.get('vp_refresh_token')?.value
+  const accessToken = request.cookies.get('access_token')?.value
+  const refreshToken = request.cookies.get('refresh_token')?.value
 
   // If accessing protected route without access token, try refresh
   if (!accessToken && refreshToken && isProtectedPage) {
@@ -27,7 +27,7 @@ export async function middleware(request: NextRequest) {
         const data = await refreshRes.json()
         const response = NextResponse.next()
 
-        response.cookies.set('vp_access_token', data.accessToken, {
+        response.cookies.set('access_token', data.accessToken, {
           httpOnly: true,
           secure: process.env.NODE_ENV === 'production',
           sameSite: 'lax',
@@ -36,7 +36,7 @@ export async function middleware(request: NextRequest) {
         })
 
         if (data.refreshToken) {
-          response.cookies.set('vp_refresh_token', data.refreshToken, {
+          response.cookies.set('refresh_token', data.refreshToken, {
             httpOnly: true,
             secure: process.env.NODE_ENV === 'production',
             sameSite: 'lax',
@@ -52,8 +52,8 @@ export async function middleware(request: NextRequest) {
     }
 
     const response = NextResponse.redirect(new URL('/login', request.url))
-    response.cookies.set('vp_access_token', '', { httpOnly: true, maxAge: 0, path: '/' })
-    response.cookies.set('vp_refresh_token', '', { httpOnly: true, maxAge: 0, path: '/' })
+    response.cookies.set('access_token', '', { httpOnly: true, maxAge: 0, path: '/' })
+    response.cookies.set('refresh_token', '', { httpOnly: true, maxAge: 0, path: '/' })
     return response
   }
 

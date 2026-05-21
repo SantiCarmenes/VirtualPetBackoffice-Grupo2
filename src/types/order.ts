@@ -1,17 +1,25 @@
-export type OrderStatus = 'PENDING' | 'CONFIRMED' | 'SHIPPED' | 'DELIVERED' | 'CANCELLED'
+export type OrderStatus =
+  | 'RECEIVED'
+  | 'IN_PREPARATION'
+  | 'IN_TRANSIT'
+  | 'DELIVERED'
+  | 'NOT_DELIVERED'
+  | 'CANCELLED'
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
-  PENDING: 'Pendiente',
-  CONFIRMED: 'Confirmado',
-  SHIPPED: 'En Tránsito',
+  RECEIVED: 'Recibido',
+  IN_PREPARATION: 'En Preparación',
+  IN_TRANSIT: 'En Camino',
   DELIVERED: 'Entregado',
+  NOT_DELIVERED: 'No Entregado',
   CANCELLED: 'Cancelado',
 }
 
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  PENDING: ['CONFIRMED', 'CANCELLED'],
-  CONFIRMED: ['SHIPPED', 'CANCELLED'],
-  SHIPPED: ['DELIVERED', 'CANCELLED'],
+  RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
+  IN_PREPARATION: ['IN_TRANSIT', 'CANCELLED'],
+  IN_TRANSIT: ['DELIVERED', 'NOT_DELIVERED'],
+  NOT_DELIVERED: ['IN_TRANSIT', 'CANCELLED'],
   DELIVERED: [],
   CANCELLED: [],
 }
@@ -31,6 +39,7 @@ export interface OrderItem {
   unitPrice: number
   lineTotal: number
   productNameSnapshot: string
+  skuSnapshot?: string
 }
 
 export interface ShippingAddress {
@@ -38,6 +47,7 @@ export interface ShippingAddress {
   city?: string
   province?: string
   postalCode?: string
+  [key: string]: unknown
 }
 
 export interface Order {
@@ -50,9 +60,14 @@ export interface Order {
   items: OrderItem[]
   subtotal: number
   shippingCost: number
-  discount: number
+  discountTotal: number
   total: number
+  currency: string
+  deliveryAttempts: number
+  nextDeliveryAt?: string
   createdAt: string
+  updatedAt: string
+  payment?: Payment | null
 }
 
 export interface OrdersResponse {
@@ -93,27 +108,16 @@ export interface ApiError {
   status?: number
 }
 
-// --- Shipping Types ---
+// --- Stats ---
 
-export type ShippingApiStatus = 'PENDING' | 'PROCESSING' | 'SHIPPED' | 'DELIVERED'
-
-export interface ShippingMethod {
-  id: string
-  name: string
-  description: string
-  cost: number
-  estimatedDays: number
-  active: boolean
-}
-
-export interface ShippingRecord {
-  id: string
-  orderId: string
-  methodId: string
-  status: ShippingApiStatus
-  estimatedDelivery?: string
-  createdAt: string
-  updatedAt: string
+export interface OrderStats {
+  RECEIVED: number
+  IN_PREPARATION: number
+  IN_TRANSIT: number
+  DELIVERED: number
+  NOT_DELIVERED: number
+  CANCELLED: number
+  total: number
 }
 
 // --- Payment Types ---
@@ -129,13 +133,3 @@ export interface Payment {
   updatedAt: string
 }
 
-// --- Warehouse Types ---
-
-export interface Warehouse {
-  id: string
-  name: string
-  code: string
-  address: Record<string, unknown>
-  createdAt: string
-  updatedAt: string
-}

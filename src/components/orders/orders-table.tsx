@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import {
   ColumnDef,
   flexRender,
@@ -12,7 +13,7 @@ import {
 import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { useState } from 'react'
 
-import { Order, OrderStatus, OrderItem, getAllowedTransitions } from '@/types/order'
+import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS } from '@/types/order'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -40,6 +41,7 @@ function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
 }
 
 function ActionCell({ order }: { order: Order }) {
+  const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
   const allowedTransitions = getAllowedTransitions(order.status)
 
@@ -48,7 +50,7 @@ function ActionCell({ order }: { order: Order }) {
     try {
       await orderService.updateOrderStatus(order.id, newStatus)
       toast.success('Estado actualizado correctamente')
-      window.location.reload()
+      router.refresh()
     } catch (error: any) {
       toast.error(error?.message || 'Error al actualizar el estado')
     } finally {
@@ -67,16 +69,13 @@ function ActionCell({ order }: { order: Order }) {
         value=""
         onValueChange={(value) => handleStatusChange(value as OrderStatus)}
       >
-        <SelectTrigger className="h-8 w-[140px]">
+        <SelectTrigger className="h-8 w-[160px]">
           <SelectValue placeholder="Cambiar estado" />
         </SelectTrigger>
         <SelectContent>
           {allowedTransitions.map((status) => (
             <SelectItem key={status} value={status}>
-              {status === 'CONFIRMED' && 'Confirmar'}
-              {status === 'SHIPPED' && 'Enviar'}
-              {status === 'DELIVERED' && 'Entregar'}
-              {status === 'CANCELLED' && 'Cancelar'}
+              {STATUS_LABELS[status]}
             </SelectItem>
           ))}
         </SelectContent>
@@ -97,28 +96,37 @@ export function OrdersTable({ data }: { data: Order[] }) {
     {
       accessorKey: 'id',
       header: 'Nº Pedido',
-      cell: ({ row }) => <span className="font-mono text-sm">{row.getValue('id')}</span>,
+      cell: ({ row }) => (
+        <span className="font-mono text-xs">{(row.getValue('id') as string).slice(0, 8).toUpperCase()}</span>
+      ),
     },
     {
       accessorKey: 'customerName',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Cliente
-            <SortIcon sorted={column.getIsSorted()} />
-          </Button>
-        )
-      },
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 data-[state=open]:bg-accent"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Cliente
+          <SortIcon sorted={column.getIsSorted()} />
+        </Button>
+      ),
     },
     {
       accessorKey: 'status',
       header: 'Estado',
       cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+    },
+    {
+      accessorKey: 'deliveryAttempts',
+      header: 'Intentos',
+      cell: ({ row }) => {
+        const attempts = row.getValue('deliveryAttempts') as number
+        if (!attempts) return <span className="text-muted-foreground">—</span>
+        return <span className="text-amber-600 font-medium">{attempts}/3</span>
+      },
     },
     {
       accessorKey: 'items',
@@ -133,24 +141,22 @@ export function OrdersTable({ data }: { data: Order[] }) {
       header: 'Total',
       cell: ({ row }) => {
         const total = row.getValue('total') as number
-        return <span>${total.toFixed(2)}</span>
+        return <span>${Number(total).toFixed(2)}</span>
       },
     },
     {
       accessorKey: 'createdAt',
-      header: ({ column }) => {
-        return (
-          <Button
-            variant="ghost"
-            size="sm"
-            className="-ml-3 h-8 data-[state=open]:bg-accent"
-            onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
-          >
-            Creado
-            <SortIcon sorted={column.getIsSorted()} />
-          </Button>
-        )
-      },
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          size="sm"
+          className="-ml-3 h-8 data-[state=open]:bg-accent"
+          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc')}
+        >
+          Creado
+          <SortIcon sorted={column.getIsSorted()} />
+        </Button>
+      ),
       cell: ({ row }) => {
         const date = row.getValue('createdAt') as string
         return <span>{new Date(date).toLocaleDateString()}</span>
@@ -159,10 +165,7 @@ export function OrdersTable({ data }: { data: Order[] }) {
     {
       id: 'actions',
       header: '',
-      cell: ({ row }) => {
-        const order = row.original
-        return <ActionCell order={order} />
-      },
+      cell: ({ row }) => <ActionCell order={row.original} />,
     },
   ]
 

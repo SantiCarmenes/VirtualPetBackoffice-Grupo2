@@ -1,6 +1,9 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
+import { revalidateTag } from 'next/cache'
 import { API_BASE_URL } from '@/lib/config'
+
+const MUTATION_METHODS = new Set(['POST', 'PATCH', 'PUT', 'DELETE'])
 
 async function proxyRequest(
   request: Request,
@@ -8,7 +11,7 @@ async function proxyRequest(
   method: string
 ) {
   const cookieStore = cookies()
-  const accessToken = cookieStore.get('vp_access_token')?.value
+  const accessToken = cookieStore.get('access_token')?.value
   const path = params.path.join('/')
 
   const url = new URL(request.url)
@@ -29,6 +32,10 @@ async function proxyRequest(
   }
 
   const res = await fetch(targetUrl, init)
+
+  if (MUTATION_METHODS.has(method) && res.ok) {
+    revalidateTag('orders')
+  }
 
   const responseBody = await res.text()
   return new NextResponse(responseBody, {

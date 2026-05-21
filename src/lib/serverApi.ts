@@ -7,7 +7,7 @@ export async function serverFetch<T>(
   config: RequestInit = {}
 ): Promise<T> {
   const cookieStore = cookies()
-  const accessToken = cookieStore.get('vp_access_token')?.value
+  const accessToken = cookieStore.get('access_token')?.value
 
   const url = `${API_BASE_URL}${path}`
 
@@ -20,10 +20,24 @@ export async function serverFetch<T>(
     headers['Authorization'] = `Bearer ${accessToken}`
   }
 
-  const response = await fetch(url, {
-    ...config,
-    headers,
-  })
+  let response = await fetch(url, { ...config, headers })
+
+  // Access token expired mid-render: try refresh once, then retry
+  if (response.status === 401) {
+    const refreshToken = cookieStore.get('refresh_token')?.value
+    if (refreshToken) {
+      const refreshRes = await fetch(`${API_BASE_URL}/auth/refresh`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ refreshToken }),
+      })
+      if (refreshRes.ok) {
+        const { accessToken: newToken } = await refreshRes.json()
+        headers['Authorization'] = `Bearer ${newToken}`
+        response = await fetch(url, { ...config, headers })
+      }
+    }
+  }
 
   if (response.status === 401) {
     redirect('/login')

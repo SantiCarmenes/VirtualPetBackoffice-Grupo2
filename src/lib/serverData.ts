@@ -1,7 +1,6 @@
 import { serverFetch } from './serverApi'
 import { mapOrderToShipment, mapOrderStatusToQuery } from './shipmentMappers'
-import { ShipmentStatus, ShipmentsResponse } from '@/types/shipment'
-import { ISSUE_STATUSES } from '@/types/shipment'
+import { ShipmentStatus, ShipmentsResponse, User, Order, ShippingRecord, Shipment } from '@/types/shipment'
 
 interface GetShipmentsParams {
   status?: ShipmentStatus
@@ -36,15 +35,14 @@ export async function getServerShipments(params?: GetShipmentsParams): Promise<S
   }
 }
 
-export async function getServerIssues(page: number = 1, limit: number = 100) {
-  const results = await Promise.all(
-    ISSUE_STATUSES.map((status) => getServerShipments({ status, page, limit }))
-  )
+export async function getServerUser(): Promise<User> {
+  return serverFetch<User>('/users/me')
+}
 
-  return {
-    data: results.flatMap((r) => r.data),
-    total: results.reduce((acc, r) => acc + r.total, 0),
-    page: page || 1,
-    limit: limit || 10,
-  }
+export async function getServerShipmentById(id: string): Promise<Shipment> {
+  const [order, shippingRecord] = await Promise.all([
+    serverFetch<Order>(`/orders/${id}`),
+    serverFetch<ShippingRecord>(`/shipping/orders/${id}`).catch(() => undefined),
+  ])
+  return mapOrderToShipment(order, shippingRecord)
 }

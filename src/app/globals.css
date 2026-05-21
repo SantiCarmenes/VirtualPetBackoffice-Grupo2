@@ -4,48 +4,97 @@
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-    --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-    --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    /* Brand: Deep Navy / Indigo */
+    --background: 98% 0.005 250;
+    --foreground: 20% 0.02 250;
+
+    --card: 100% 0 0;
+    --card-foreground: 20% 0.02 250;
+
+    --popover: 100% 0 0;
+    --popover-foreground: 20% 0.02 250;
+
+    --primary: 28% 0.07 250;
+    --primary-foreground: 98% 0.005 250;
+
+    --secondary: 94% 0.01 250;
+    --secondary-foreground: 28% 0.07 250;
+
+    --muted: 94% 0.01 250;
+    --muted-foreground: 55% 0.03 250;
+
+    --accent: 94% 0.01 250;
+    --accent-foreground: 28% 0.07 250;
+
+    --destructive: 55% 0.2 25;
+    --destructive-foreground: 98% 0.005 250;
+
+    --border: 88% 0.02 250;
+    --input: 88% 0.02 250;
+    --ring: 28% 0.07 250;
     --radius: 0.5rem;
+
+    /* Sidebar: Brand dark surface */
+    --sidebar: 18% 0.05 250;
+    --sidebar-foreground: 92% 0.01 250;
+    --sidebar-border: 25% 0.04 250;
+    --sidebar-ring: 50% 0.06 250;
+    --sidebar-accent: 25% 0.05 250;
+    --sidebar-accent-foreground: 98% 0.01 250;
+
+    /* Status colors */
+    --status-pending: 65% 0.14 80;
+    --status-pending-foreground: 98% 0.01 80;
+    --status-pending-muted: 95% 0.03 80;
+
+    --status-in-transit: 65% 0.12 210;
+    --status-in-transit-foreground: 98% 0.01 210;
+    --status-in-transit-muted: 95% 0.02 210;
+
+    --status-delivered: 65% 0.12 150;
+    --status-delivered-foreground: 98% 0.01 150;
+    --status-delivered-muted: 95% 0.02 150;
+
+    --status-cancelled: 60% 0.18 25;
+    --status-cancelled-foreground: 98% 0.01 25;
+    --status-cancelled-muted: 95% 0.03 25;
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --background: 15% 0.03 250;
+    --foreground: 94% 0.01 250;
+
+    --card: 18% 0.04 250;
+    --card-foreground: 94% 0.01 250;
+
+    --popover: 18% 0.04 250;
+    --popover-foreground: 94% 0.01 250;
+
+    --primary: 60% 0.08 250;
+    --primary-foreground: 15% 0.03 250;
+
+    --secondary: 25% 0.04 250;
+    --secondary-foreground: 94% 0.01 250;
+
+    --muted: 25% 0.04 250;
+    --muted-foreground: 65% 0.03 250;
+
+    --accent: 25% 0.04 250;
+    --accent-foreground: 94% 0.01 250;
+
+    --destructive: 45% 0.18 25;
+    --destructive-foreground: 98% 0.005 250;
+
+    --border: 25% 0.04 250;
+    --input: 25% 0.04 250;
+    --ring: 60% 0.08 250;
+
+    --sidebar: 12% 0.03 250;
+    --sidebar-foreground: 90% 0.01 250;
+    --sidebar-border: 20% 0.04 250;
+    --sidebar-ring: 55% 0.06 250;
+    --sidebar-accent: 20% 0.04 250;
+    --sidebar-accent-foreground: 94% 0.01 250;
   }
 }
 

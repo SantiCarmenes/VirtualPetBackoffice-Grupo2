@@ -483,3 +483,57 @@ Browser ──POST /api/auth/login──► Next.js Proxy ──POST /auth/login
 - **Build exitoso**: 9 rutas, 0 errores TypeScript
 - **Middleware activo**: Redirige usuarios no autenticados a `/login`
 
+## 2025-05-21 — Full Server Components Migration + RSC Optimization
+### Contexto
+El proyecto utilizaba un patrón híbrido donde las páginas eran Server Components que solo servían para hidratar Client Components vía `<HydrationBoundary>` de React Query. Esto generaba:
+1. **Bundle innecesariamente grande**: Todo el código de fetching y estado se enviaba al cliente.
+2. **Pantallas de carga client-side**: Las páginas llegaban vacías al browser y dependían de `useEffect` para fetchear datos.
+3. **Seguridad subóptima**: El token JWT se manejaba parcialmente en el cliente.
+Esta sesión migró todas las páginas principales a **Server Components puros (RSC)**, moviendo el data fetching al servidor, eliminando React Query hydration donde no era necesario, y delegando solo los elementos realmente interactivos a Client Components pequeños.
+---
+### Decisiones Arquitectónicas
+1. **Páginas como Server Components async**: Todas las páginas de lista (`/dashboard`, `/shipments`, `/pending`) ahora fetchean datos directamente en el servidor usando `serverFetch()`, leyendo el JWT desde `cookies()` de forma automática.
+2. **Eliminación de React Query Hydration**: Removidos `QueryClient`, `dehydrate`, `HydrationWrapper` y todos los `*-content.tsx` intermedios. Los datos fluyen directamente de la función `page.tsx` a los componentes hijos vía props.
+3. **Interacciones aisladas en Client Components mínimos**:
+   - `ShipmentsFilterBar`: solo manipula query params (`?status=...`) en la URL.
+   - `UrlPagination`: solo manipula query params (`?page=...`) en la URL.
+   - `ShipmentsTable`: mantiene `@tanstack/react-table` para sorting client-side.
+   - `FulfillmentChecklist`: conserva estados locales (checkboxes, selects, dialogs) y mutaciones.
+4. **Ruta protegida automática**: `serverApi.ts` ya maneja `401` con `redirect('/login')`, por lo que no es necesario repetir lógica de auth en cada página.
+---
+### Fase 1: Server Data Helpers
+- **`src/lib/serverData.ts`**:
+  - Agregado `getServerUser()` → `serverFetch('/users/me')`
+  - Agregado `getServerShipmentById(id)` → obtiene order + shipping record en paralelo y mapea a `Shipment`
+- **`src/types/shipment.ts`**:
+  - Agregada interfaz `ShipmentsResponse` (faltaba en el proyecto)
+---
+### Fase 2: Dashboard Shell (`layout.tsx` + `dashboard-nav.tsx`)
+- **`src/app/(dashboard)/layout.tsx`** → Convertido a Server Component `async`. Obtiene usuario con `getServerUser()` y lo pasa como prop.
+- **`src/components/dashboard-nav.tsx`** → Mantiene `'use client'` (necesita `usePathname` para links activos). Eliminado hook `useAuth`; ahora recibe `user: User | null` como prop. Logout directo con `authService.logout()` + `router.push('/login')`.
+---
+### Fase 3: Dashboard Page
+- **`src/app/(dashboard)/dashboard/page.tsx`** → Server Component puro. Obtiene `shipments` y pasa datos directamente.
+- **`src/app/(dashboard)/dashboard/dashboard-content.tsx`** → Eliminado `'use client'`. Ahora es Server Component que recibe `shipments` como prop. Renderiza cards estáticas + links.
+---
+### Fase 4: List Pages (`shipments`, `pending`)
+- **`src/app/(dashboard)/shipments/page.tsx`** → Server Component con `searchParams`. Lee `searchParams.status` y `searchParams.page`, fetchea con `getServerShipments()`, renderiza `ShipmentsFilterBar` + `ShipmentsTable` + `UrlPagination`.
+- **`src/app/(dashboard)/pending/page.tsx`** → Server Component con `searchParams.page`; status fijo `PENDING`.
+- **Nuevos componentes cliente**:
+  - `src/components/shipments/shipments-filter-bar.tsx` — Botones de filtro que actualizan `?status=...` en URL.
+  - `src/components/ui/url-pagination.tsx` — Paginación que actualiza `?page=...` en URL.
+- **Eliminados**:
+  - `shipments-content.tsx`, `pending-content.tsx`
+  - `src/components/hydration-wrapper.tsx`
+  - `src/hooks/useShipments.ts`, `src/hooks/useIssues.ts`
+---
+### Fase 5: Fulfillment Page (`shipments/[id]/fulfill`)
+- **`src/app/(dashboard)/shipments/[id]/fulfill/page.tsx`** → Convertido a Server Component `async`.
+  - Obtiene `shipment` con `getServerShipmentById(params.id)`.
+  - Obtiene `payment` con `serverFetch` directo.
+  - Renderiza en servidor: Header, Timeline, Customer Info, Shipping Info, Cancelled Warning.
+  - Delega parte interactiva a `<FulfillmentChecklist shipment={shipment} />`.
+- **`src/components/shipments/fulfillment-checklist.tsx`** → Refactorizado.
+  - Eliminadas todas las secciones estáticas (ahora renderizadas en el server page).
+  - Conserva solo: Progress bar, Product Checklist (checkboxes), Actions Panel, Discrepancy Dialog.
+---

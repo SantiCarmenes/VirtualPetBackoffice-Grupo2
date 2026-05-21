@@ -10,7 +10,6 @@ export function middleware(request: NextRequest) {
   const isProtectedPage =
     pathname.startsWith('/dashboard') ||
     pathname.startsWith('/shipments') ||
-    pathname.startsWith('/issues') ||
     pathname.startsWith('/pending')
 
   const hasToken = !!accessToken || !!refreshToken

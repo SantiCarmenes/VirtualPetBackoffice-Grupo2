@@ -179,6 +179,14 @@ export interface Order {
   createdAt: string
 }
 
+export interface ShipmentsResponse {
+  data: Shipment[]
+  total: number
+  page: number
+  limit: number
+  pages: number
+}
+
 export interface OrdersResponse {
   data: Order[]
   pagination: {

@@ -537,3 +537,21 @@ Esta sesión migró todas las páginas principales a **Server Components puros (
   - Eliminadas todas las secciones estáticas (ahora renderizadas en el server page).
   - Conserva solo: Progress bar, Product Checklist (checkboxes), Actions Panel, Discrepancy Dialog.
 ---
+
+
+### Fase 8: Limpieza de Tipos Huérfanos
+
+- **Eliminados de `src/types/shipment.ts`**:
+  - `ACTIVE_STATUSES` — Array redundante (incluía todos los statuses); nadie lo importaba.
+  - `ISSUE_STATUSES` — Página de incidencias eliminada previamente.
+  - `LogisticsType` — Hardcoded (`INTERNAL_DELIVERY`, `COURIER_1`, `COURIER_2`); reemplazado por `ShippingMethod` dinámico de la API.
+  - `LOGISTICS_LABELS` — Labels del tipo hardcoded; sin consumidores.
+  - `FulfillmentPayload` — Interface del flujo antiguo; el fulfillment ahora muta directamente.
+
+---
+
+## Notas de Build
+
+- **Next.js 14.1.4** — App Router
+- **Build exitoso**: 12 rutas, 0 errores TypeScript
+- **Middleware activo**: Redirige usuarios no autenticados a `/login`

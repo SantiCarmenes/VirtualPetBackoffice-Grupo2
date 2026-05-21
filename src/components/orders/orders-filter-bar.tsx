@@ -3,14 +3,16 @@
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { NON_PENDING_STATUSES, ShipmentStatus, STATUS_LABELS } from '@/types/shipment'
+import { OrderStatus, STATUS_LABELS } from '@/types/order'
 
-export function ShipmentsFilterBar({ currentStatus }: { currentStatus?: ShipmentStatus }) {
+const ALL_STATUSES: OrderStatus[] = ['PENDING', 'CONFIRMED', 'SHIPPED', 'DELIVERED', 'CANCELLED']
+
+export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus }) {
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
 
-  function setStatus(status: ShipmentStatus | undefined) {
+  function setStatus(status: OrderStatus | undefined) {
     const params = new URLSearchParams(searchParams.toString())
     if (status) {
       params.set('status', status)
@@ -30,7 +32,7 @@ export function ShipmentsFilterBar({ currentStatus }: { currentStatus?: Shipment
       >
         Todos
       </Button>
-      {NON_PENDING_STATUSES.map((status) => (
+      {ALL_STATUSES.map((status) => (
         <Button
           key={status}
           variant={currentStatus === status ? 'default' : 'outline'}

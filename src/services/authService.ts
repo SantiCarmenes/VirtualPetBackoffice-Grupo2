@@ -1,4 +1,4 @@
-import { AuthCredentials, User } from '@/types/shipment'
+import { AuthCredentials, User } from '@/types/order'
 
 export const authService = {
   async login(credentials: AuthCredentials): Promise<void> {

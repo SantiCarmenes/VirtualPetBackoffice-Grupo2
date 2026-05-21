@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import { ShippingMethod, ShippingRecord } from '@/types/shipment'
+import { ShippingMethod, ShippingRecord } from '@/types/order'
 
 export const shippingService = {
   async getMethods(): Promise<ShippingMethod[]> {

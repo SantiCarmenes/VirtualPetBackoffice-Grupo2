@@ -1,4 +1,4 @@
-import { ApiError } from '@/types/shipment'
+import { ApiError } from '@/types/order'
 
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>

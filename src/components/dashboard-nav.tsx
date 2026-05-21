@@ -3,15 +3,15 @@
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Package, Truck, LogOut } from 'lucide-react'
+import { LayoutDashboard, Package, ClipboardList, LogOut } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { authService } from '@/services/authService'
-import { User } from '@/types/shipment'
+import { User } from '@/types/order'
 
 const navItems = [
   { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, color: 'primary' },
   { href: '/pending', label: 'Pendientes', icon: Package, color: 'status-pending' },
-  { href: '/shipments', label: 'Envíos', icon: Truck, color: 'status-in-transit' },
+  { href: '/orders', label: 'Pedidos', icon: ClipboardList, color: 'status-in-transit' },
 ]
 
 export function DashboardNav({ user, children }: { user: User | null; children: React.ReactNode }) {
@@ -42,9 +42,7 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
                 ? 'border-l-primary'
                 : item.color === 'status-pending'
                   ? 'border-l-status-pending'
-                  : item.color === 'status-in-transit'
-                    ? 'border-l-status-in-transit'
-                    : 'border-l-status-cancelled'
+                  : 'border-l-status-in-transit'
 
             return (
               <Link
@@ -96,9 +94,7 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
                 ? 'border-primary'
                 : item.color === 'status-pending'
                   ? 'border-status-pending'
-                  : item.color === 'status-in-transit'
-                    ? 'border-status-in-transit'
-                    : 'border-status-cancelled'
+                  : 'border-status-in-transit'
 
             return (
               <Link

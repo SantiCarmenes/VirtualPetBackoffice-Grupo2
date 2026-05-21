@@ -1,5 +1,5 @@
 import { apiClient } from '@/lib/apiClient'
-import { Order, OrdersResponse, OrderStatus } from '@/types/shipment'
+import { Order, OrdersResponse, OrderStatus } from '@/types/order'
 
 export const orderService = {
   async getOrders(params?: {

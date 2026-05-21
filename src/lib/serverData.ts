@@ -1,48 +1,69 @@
 import { serverFetch } from './serverApi'
-import { mapOrderToShipment, mapOrderStatusToQuery } from './shipmentMappers'
-import { ShipmentStatus, ShipmentsResponse, User, Order, ShippingRecord, Shipment } from '@/types/shipment'
+import {
+  Order,
+  OrdersResponse,
+  OrderStatus,
+  User,
+  ShippingRecord,
+  ShippingMethod,
+  Payment,
+  Warehouse,
+} from '@/types/order'
 
-interface GetShipmentsParams {
-  status?: ShipmentStatus
+interface GetOrdersParams {
+  status?: OrderStatus
   page?: number
   limit?: number
-  sortBy?: string
-  sortOrder?: 'asc' | 'desc'
+  sort?: string
 }
 
-export async function getServerShipments(params?: GetShipmentsParams): Promise<ShipmentsResponse> {
-  const orderStatus = mapOrderStatusToQuery(params?.status)
-
+export async function getServerOrders(params?: GetOrdersParams): Promise<OrdersResponse> {
   const searchParams = new URLSearchParams()
-  if (orderStatus) searchParams.set('status', orderStatus)
+  if (params?.status) searchParams.set('status', params.status)
   if (params?.page) searchParams.set('page', String(params.page))
   if (params?.limit) searchParams.set('limit', String(params.limit))
-  if (params?.sortBy) {
-    searchParams.set('sort', `${params.sortBy}:${params.sortOrder ?? 'desc'}`)
-  }
+  if (params?.sort) searchParams.set('sort', params.sort)
 
   const queryString = searchParams.toString()
   const path = `/orders/all${queryString ? '?' + queryString : ''}`
 
-  const response = await serverFetch<any>(path)
+  return serverFetch<OrdersResponse>(path, {
+    next: { revalidate: 1200, tags: ['orders'] },
+  })
+}
 
-  return {
-    data: response.data.map((order: any) => mapOrderToShipment(order)),
-    total: response.pagination.total,
-    page: response.pagination.page,
-    limit: response.pagination.limit,
-    pages: response.pagination.pages,
-  }
+export async function getServerOrderById(id: string): Promise<Order> {
+  return serverFetch<Order>(`/orders/${id}`)
 }
 
 export async function getServerUser(): Promise<User> {
   return serverFetch<User>('/users/me')
 }
 
-export async function getServerShipmentById(id: string): Promise<Shipment> {
-  const [order, shippingRecord] = await Promise.all([
-    serverFetch<Order>(`/orders/${id}`),
-    serverFetch<ShippingRecord>(`/shipping/orders/${id}`).catch(() => undefined),
-  ])
-  return mapOrderToShipment(order, shippingRecord)
+export async function getServerShippingRecord(orderId: string): Promise<ShippingRecord | null> {
+  try {
+    return await serverFetch<ShippingRecord>(`/shipping/orders/${orderId}`)
+  } catch {
+    return null
+  }
+}
+
+export async function getServerShippingMethods(): Promise<ShippingMethod[]> {
+  return serverFetch<ShippingMethod[]>('/shipping/methods')
+}
+
+export async function getServerPayment(orderId: string): Promise<Payment | null> {
+  try {
+    return await serverFetch<Payment>(`/payment/orders/${orderId}`)
+  } catch {
+    return null
+  }
+}
+
+export async function getServerWarehouses(): Promise<Warehouse[]> {
+  return serverFetch<Warehouse[]>('/warehouses')
+}
+
+export async function getServerUsers(): Promise<User[]> {
+  return serverFetch<User[]>('/users')
 }

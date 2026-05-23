@@ -1,36 +1,42 @@
-import { apiClient } from '@/lib/apiClient'
-import { MOCK_ADMIN_TOKEN } from '@/lib/auth'
-import { AuthCredentials, AuthTokens } from '@/types/shipment'
+import { AuthCredentials, User } from '@/types/order'
 
 export const authService = {
-  async login(credentials: AuthCredentials): Promise<AuthTokens> {
-    // Dev fallback: admin/admin bypasses real API
-    if (credentials.email === 'admin@example.com' && credentials.password === 'admin') {
-      return { accessToken: MOCK_ADMIN_TOKEN }
-    }
-
-    // TODO: verify endpoint
-    return apiClient<AuthTokens>('/auth/login', {
+  async login(credentials: AuthCredentials): Promise<void> {
+    const res = await fetch('/api/auth/login', {
       method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(credentials),
     })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Login failed')
+    }
+
+    await res.json()
   },
 
   async logout(): Promise<void> {
-    // TODO: verify endpoint
-    return apiClient<void>('/auth/logout', {
+    const res = await fetch('/api/auth/logout', {
       method: 'POST',
     })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Logout failed')
+    }
   },
 
-  async me(): Promise<{ id: string; email: string; name: string }> {
-    // TODO: activate login - remove this mock bypass, uncomment the real API call
-    const token = typeof window !== 'undefined' ? localStorage.getItem('vp_backoffice_token') : null
-    if (!token || token === MOCK_ADMIN_TOKEN) {
-      return { id: 'admin', email: 'admin@example.com', name: 'Admin User' }
+  async me(): Promise<User> {
+    const res = await fetch('/api/auth/me', {
+      method: 'GET',
+    })
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}))
+      throw new Error(error.message || 'Not authenticated')
     }
 
-    // TODO: verify endpoint
-    return apiClient<{ id: string; email: string; name: string }>('/auth/me')
+    return res.json()
   },
 }

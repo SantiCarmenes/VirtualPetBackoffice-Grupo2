@@ -1,15 +1,11 @@
-import { getToken, removeToken } from './auth'
-import { ApiError } from '@/types/shipment'
-
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001/api'
-// TODO: change for production - Update API_BASE_URL with production IP/Port
+import { ApiError } from '@/types/order'
 
 interface RequestConfig extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>
 }
 
 function buildUrl(path: string, params?: Record<string, string | number | boolean | undefined>): string {
-  const url = new URL(path, API_BASE_URL)
+  const url = new URL(`/api/proxy${path}`, window.location.origin)
   if (params) {
     Object.entries(params).forEach(([key, value]) => {
       if (value !== undefined && value !== null) {
@@ -38,6 +34,29 @@ async function handleResponse<T>(response: Response): Promise<T> {
   return response.json() as Promise<T>
 }
 
+// Silent refresh logic
+let refreshPromise: Promise<void> | null = null
+
+async function performRefresh(): Promise<void> {
+  const response = await fetch('/api/auth/refresh', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+  })
+
+  if (!response.ok) {
+    throw new Error('Refresh failed')
+  }
+}
+
+function getRefreshOperation(): Promise<void> {
+  if (!refreshPromise) {
+    refreshPromise = performRefresh().finally(() => {
+      refreshPromise = null
+    })
+  }
+  return refreshPromise
+}
+
 export async function apiClient<T>(
   path: string,
   config: RequestConfig = {}
@@ -45,15 +64,9 @@ export async function apiClient<T>(
   const { params, ...restConfig } = config
   const url = buildUrl(path, params)
 
-  const token = getToken()
-
   const headers: Record<string, string> = {
     'Content-Type': 'application/json',
     ...((restConfig.headers as Record<string, string>) || {}),
-  }
-
-  if (token) {
-    headers['Authorization'] = `Bearer ${token}`
   }
 
   const response = await fetch(url, {
@@ -62,9 +75,20 @@ export async function apiClient<T>(
   })
 
   if (response.status === 401) {
-    removeToken()
-    if (typeof window !== 'undefined') {
-      window.location.href = '/login'
+    try {
+      await getRefreshOperation()
+
+      const retryResponse = await fetch(url, {
+        ...restConfig,
+        headers,
+      })
+
+      return handleResponse<T>(retryResponse)
+    } catch {
+      if (typeof window !== 'undefined') {
+        window.location.href = '/login'
+      }
+      throw new Error('Unauthorized')
     }
   }
 

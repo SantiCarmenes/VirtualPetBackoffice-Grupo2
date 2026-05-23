@@ -1,119 +1,130 @@
-'use client'
-
-import Link from 'next/link'
-import { useShipments } from '@/hooks/useShipments'
-import { useIssues } from '@/hooks/useIssues'
+import { getServerOrderStats } from '@/lib/serverData'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, Package, Truck, CheckCircle, AlertTriangle } from 'lucide-react'
+import { Package, Truck, CheckCircle, ClipboardList } from 'lucide-react'
+import Link from 'next/link'
+import { cn } from '@/lib/utils'
 
-export default function DashboardPage() {
-  const { data: shipmentsData, isLoading: shipmentsLoading } = useShipments()
-  const { data: issuesData, isLoading: issuesLoading } = useIssues()
+export default async function DashboardPage() {
+  const stats = await getServerOrderStats()
 
-  const pendingCount = shipmentsData?.data.filter((s) => s.status === 'PENDING').length ?? 0
-  const inTransitCount = shipmentsData?.data.filter((s) => s.status === 'IN_TRANSIT').length ?? 0
-  const deliveredCount = shipmentsData?.data.filter((s) => s.status === 'DELIVERED').length ?? 0
-  const failedCount = shipmentsData?.data.filter((s) => s.status.startsWith('FAILED')).length ?? 0
-  const issuesCount = issuesData?.total ?? 0
+  const pending   = stats.RECEIVED + stats.IN_PREPARATION
+  const inTransit = stats.IN_TRANSIT + stats.NOT_DELIVERED
+  const finalized = stats.DELIVERED + stats.CANCELLED
+  const total     = stats.total
 
-  const isLoading = shipmentsLoading || issuesLoading
+  const STATUSES = [
+    {
+      key: 'pending',
+      label: 'Pendientes',
+      sublabel: 'Recibidos y en preparación',
+      href: '/orders?status=RECEIVED',
+      icon: Package,
+      count: pending,
+      borderColor: 'border-status-pending',
+      bgColor: 'bg-status-pending',
+      textColor: 'text-status-pending',
+    },
+    {
+      key: 'inTransit',
+      label: 'En Camino',
+      sublabel: 'En tránsito o con reintento',
+      href: '/orders?status=IN_TRANSIT',
+      icon: Truck,
+      count: inTransit,
+      borderColor: 'border-status-in-transit',
+      bgColor: 'bg-status-in-transit',
+      textColor: 'text-status-in-transit',
+    },
+    {
+      key: 'finalized',
+      label: 'Finalizados',
+      sublabel: 'Entregados o cancelados',
+      href: '/orders?status=DELIVERED',
+      icon: CheckCircle,
+      count: finalized,
+      borderColor: 'border-status-delivered',
+      bgColor: 'bg-status-delivered',
+      textColor: 'text-status-delivered',
+    },
+    {
+      key: 'total',
+      label: 'Total Pedidos',
+      sublabel: 'Todos los pedidos',
+      href: '/orders',
+      icon: ClipboardList,
+      count: total,
+      borderColor: 'border-primary',
+      bgColor: 'bg-primary',
+      textColor: 'text-primary',
+    },
+  ]
 
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold">Panel de Control</h1>
+        <h1 className="text-2xl font-bold text-foreground">Panel de Control</h1>
         <p className="text-sm text-muted-foreground">Resumen de tus operaciones de envío</p>
       </div>
 
-      {isLoading ? (
-        <div className="flex h-64 items-center justify-center">
-          <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
-        </div>
-      ) : (
-        <>
-          {/* Summary Cards */}
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            <Link href="/pending">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Pendientes</CardTitle>
-                  <Package className="h-4 w-4 text-yellow-600" />
+      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {STATUSES.map((status) => {
+          const Icon = status.icon
+          return (
+            <Link href={status.href} key={status.key}>
+              <Card
+                className={cn(
+                  'group cursor-pointer border-2 transition-all duration-200 hover:-translate-y-0.5 hover:shadow-md',
+                  status.borderColor
+                )}
+              >
+                <CardHeader className="flex flex-row items-center justify-between pb-2 pt-5">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">
+                    {status.label}
+                  </CardTitle>
+                  <div
+                    className={cn(
+                      'flex h-9 w-9 items-center justify-center rounded-full',
+                      status.bgColor
+                    )}
+                  >
+                    <Icon className="h-4 w-4 text-white" />
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="text-2xl font-bold">{pendingCount}</div>
-                  <p className="text-xs text-muted-foreground">Esperando preparación</p>
+                  <div className={cn('text-3xl font-bold tracking-tight', status.textColor)}>
+                    {status.count}
+                  </div>
+                  <p className="text-xs text-muted-foreground">{status.sublabel}</p>
                 </CardContent>
               </Card>
             </Link>
+          )
+        })}
+      </div>
 
-            <Link href="/shipments">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">En Tránsito</CardTitle>
-                  <Truck className="h-4 w-4 text-blue-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{inTransitCount}</div>
-                  <p className="text-xs text-muted-foreground">En camino</p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/shipments">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Entregados</CardTitle>
-                  <CheckCircle className="h-4 w-4 text-green-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{deliveredCount}</div>
-                  <p className="text-xs text-muted-foreground">Completados</p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/shipments">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Intentos Fallidos</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-orange-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{failedCount}</div>
-                  <p className="text-xs text-muted-foreground">Problemas de entrega</p>
-                </CardContent>
-              </Card>
-            </Link>
-
-            <Link href="/issues">
-              <Card className="cursor-pointer transition-colors hover:bg-accent/50">
-                <CardHeader className="flex flex-row items-center justify-between pb-2">
-                  <CardTitle className="text-sm font-medium">Incidencias</CardTitle>
-                  <AlertTriangle className="h-4 w-4 text-red-600" />
-                </CardHeader>
-                <CardContent>
-                  <div className="text-2xl font-bold">{issuesCount}</div>
-                  <p className="text-xs text-muted-foreground">Reembolsos y stock faltante</p>
-                </CardContent>
-              </Card>
-            </Link>
-          </div>
-
-          {/* Quick Actions */}
-          <div className="flex flex-wrap gap-2">
-            <Link href="/pending">
-              <Button variant="outline">Ver Pendientes</Button>
-            </Link>
-            <Link href="/shipments">
-              <Button variant="outline">Ver Envíos</Button>
-            </Link>
-            <Link href="/issues">
-              <Button variant="outline">Ver Incidencias</Button>
-            </Link>
-          </div>
-        </>
-      )}
+      <div className="flex flex-wrap gap-2">
+        <Link href="/orders?status=RECEIVED">
+          <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
+            Ver Recibidos
+          </Button>
+        </Link>
+        <Link href="/orders?status=IN_PREPARATION">
+          <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
+            Ver En Preparación
+          </Button>
+        </Link>
+        <Link href="/orders?status=IN_TRANSIT">
+          <Button variant="outline" className="border-status-in-transit text-status-in-transit hover:bg-status-in-transit-muted">
+            Ver En Camino
+          </Button>
+        </Link>
+        <Link href="/orders?status=NOT_DELIVERED">
+          <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50">
+            Ver No Entregados
+          </Button>
+        </Link>
+      </div>
     </div>
   )
 }

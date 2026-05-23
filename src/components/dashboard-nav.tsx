@@ -10,7 +10,7 @@ import { User } from '@/types/order'
 
 const navItems = [
   { href: '/dashboard', label: 'Panel de Control', icon: LayoutDashboard, color: 'primary' },
-  { href: '/pending', label: 'Pendientes', icon: Package, color: 'status-pending' },
+  { href: '/pending', label: 'Pendientes', icon: Package, color: 'violet' },
   { href: '/orders', label: 'Pedidos', icon: ClipboardList, color: 'status-in-transit' },
 ]
 
@@ -40,8 +40,8 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
             const colorClass =
               item.color === 'primary'
                 ? 'border-l-primary'
-                : item.color === 'status-pending'
-                  ? 'border-l-status-pending'
+                : item.color === 'violet'
+                  ? 'border-l-violet-500'
                   : 'border-l-status-in-transit'
 
             return (
@@ -52,7 +52,7 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
                   'flex items-center gap-3 rounded-md border-l-4 px-3 py-2.5 text-sm font-medium transition-all',
                   isActive
                     ? `bg-sidebar-accent text-sidebar-accent-foreground ${colorClass}`
-                    : 'border-transparent text-sidebar-foreground/70 hover:bg-sidebar-accent/50 hover:text-sidebar-foreground'
+                    : 'border-transparent text-sidebar-foreground opacity-70 hover:bg-sidebar-accent hover:opacity-100'
                 )}
               >
                 <Icon className="h-4 w-4 shrink-0" />
@@ -92,8 +92,8 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
             const borderColor =
               item.color === 'primary'
                 ? 'border-primary'
-                : item.color === 'status-pending'
-                  ? 'border-status-pending'
+                : item.color === 'violet'
+                  ? 'border-violet-500'
                   : 'border-status-in-transit'
 
             return (
@@ -104,7 +104,7 @@ export function DashboardNav({ user, children }: { user: User | null; children: 
                   'flex flex-1 items-center justify-center gap-2 py-3 text-xs font-medium transition-colors',
                   isActive
                     ? `border-b-2 ${borderColor} text-sidebar-foreground`
-                    : 'text-sidebar-foreground/60'
+                    : 'text-sidebar-foreground opacity-60'
                 )}
               >
                 <Icon className="h-4 w-4" />

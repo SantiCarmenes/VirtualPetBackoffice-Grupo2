@@ -1,9 +1,11 @@
 'use client'
 
+import { useTransition } from 'react'
 import { useSearchParams, usePathname, useRouter } from 'next/navigation'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { OrderStatus, STATUS_LABELS } from '@/types/order'
+import { RefreshCw } from 'lucide-react'
 
 const ALL_STATUSES: OrderStatus[] = [
   'RECEIVED',
@@ -18,6 +20,7 @@ export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus
   const router = useRouter()
   const pathname = usePathname()
   const searchParams = useSearchParams()
+  const [isPending, startTransition] = useTransition()
 
   function setStatus(status: OrderStatus | undefined) {
     const params = new URLSearchParams(searchParams.toString())
@@ -28,6 +31,12 @@ export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus
     }
     params.delete('page')
     router.push(`${pathname}?${params.toString()}`)
+  }
+
+  function handleRefresh() {
+    startTransition(() => {
+      router.refresh()
+    })
   }
 
   return (
@@ -50,6 +59,15 @@ export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus
           {STATUS_LABELS[status]}
         </Button>
       ))}
+      <Button
+        variant="outline"
+        size="sm"
+        onClick={handleRefresh}
+        disabled={isPending}
+      >
+        <RefreshCw className={cn('mr-2 h-4 w-4', isPending && 'animate-spin')} />
+        Actualizar
+      </Button>
     </div>
   )
 }

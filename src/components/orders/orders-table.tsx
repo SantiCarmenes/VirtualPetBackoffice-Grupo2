@@ -10,11 +10,12 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react'
 import { useState } from 'react'
 
 import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS } from '@/types/order'
 import { Button } from '@/components/ui/button'
+import { Card, CardContent } from '@/components/ui/card'
 import {
   Table,
   TableBody,
@@ -179,41 +180,72 @@ export function OrdersTable({ data }: { data: Order[] }) {
   })
 
   return (
-    <div className="rounded-md border">
-      <Table>
-        <TableHeader>
-          {table.getHeaderGroups().map((headerGroup) => (
-            <TableRow key={headerGroup.id}>
-              {headerGroup.headers.map((header) => (
-                <TableHead key={header.id}>
-                  {header.isPlaceholder
-                    ? null
-                    : flexRender(header.column.columnDef.header, header.getContext())}
-                </TableHead>
-              ))}
-            </TableRow>
-          ))}
-        </TableHeader>
-        <TableBody>
-          {table.getRowModel().rows?.length ? (
-            table.getRowModel().rows.map((row) => (
-              <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
-                {row.getVisibleCells().map((cell) => (
-                  <TableCell key={cell.id}>
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </TableCell>
+    <>
+      {/* Desktop Table */}
+      <div className="hidden rounded-md border md:block">
+        <Table>
+          <TableHeader>
+            {table.getHeaderGroups().map((headerGroup) => (
+              <TableRow key={headerGroup.id}>
+                {headerGroup.headers.map((header) => (
+                  <TableHead key={header.id}>
+                    {header.isPlaceholder
+                      ? null
+                      : flexRender(header.column.columnDef.header, header.getContext())}
+                  </TableHead>
                 ))}
               </TableRow>
-            ))
-          ) : (
-            <TableRow>
-              <TableCell colSpan={columns.length} className="h-24 text-center">
-                No se encontraron pedidos.
-              </TableCell>
-            </TableRow>
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+          </TableHeader>
+          <TableBody>
+            {table.getRowModel().rows?.length ? (
+              table.getRowModel().rows.map((row) => (
+                <TableRow key={row.id} data-state={row.getIsSelected() && 'selected'}>
+                  {row.getVisibleCells().map((cell) => (
+                    <TableCell key={cell.id}>
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </TableCell>
+                  ))}
+                </TableRow>
+              ))
+            ) : (
+              <TableRow>
+                <TableCell colSpan={columns.length} className="h-24 text-center">
+                  No se encontraron pedidos.
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      {/* Mobile Cards */}
+      <div className="grid gap-3 md:hidden">
+        {table.getRowModel().rows?.length ? (
+          table.getRowModel().rows.map((row) => {
+            const order = row.original
+            return (
+              <Link key={order.id} href={`/orders/${order.id}/fulfill`}>
+                <Card className="cursor-pointer transition-colors hover:bg-muted/50">
+                  <CardContent className="flex items-center justify-between p-4">
+                    <div className="space-y-1">
+                      <p className="font-mono text-xs font-medium text-foreground">
+                        #{order.id.slice(0, 8).toUpperCase()}
+                      </p>
+                      <StatusBadge status={order.status} />
+                    </div>
+                    <ChevronRight className="h-5 w-5 text-muted-foreground" />
+                  </CardContent>
+                </Card>
+              </Link>
+            )
+          })
+        ) : (
+          <div className="h-24 text-center text-sm text-muted-foreground">
+            No se encontraron pedidos.
+          </div>
+        )}
+      </div>
+    </>
   )
 }

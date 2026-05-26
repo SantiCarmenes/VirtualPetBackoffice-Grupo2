@@ -13,7 +13,7 @@ function isTokenExpiredOrMissing(token: string | undefined): boolean {
   }
 }
 
-async function attemptRefresh(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string } | null> {
+async function attemptRefresh(refreshToken: string): Promise<{ accessToken: string; refreshToken?: string } | null | undefined> {
   try {
     const res = await fetch(`${API_BASE_URL}/auth/refresh`, {
       method: 'POST',

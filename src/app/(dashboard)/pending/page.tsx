@@ -1,3 +1,4 @@
+import { Suspense } from 'react'
 import { getServerOrders } from '@/lib/serverData'
 import { OrdersTable } from '@/components/orders/orders-table'
 import { UrlPagination } from '@/components/ui/url-pagination'
@@ -9,7 +10,10 @@ export default async function PendingPage({
 }) {
   const page = Number(searchParams.page) || 1
 
-  const data = await getServerOrders({ status: 'RECEIVED', page, limit: 20 })
+  const data = await getServerOrders({ status: 'RECEIVED', page, limit: 20 }).catch(() => ({
+    data: [],
+    pagination: { total: 0, page: 1, limit: 20, pages: 0 },
+  }))
 
   return (
     <div className="space-y-6">
@@ -29,12 +33,14 @@ export default async function PendingPage({
 
       <OrdersTable data={data.data} />
       {data.pagination.pages > 1 && (
-        <UrlPagination
-          page={data.pagination.page}
-          pages={data.pagination.pages}
-          total={data.pagination.total}
-          limit={data.pagination.limit}
-        />
+        <Suspense fallback={null}>
+          <UrlPagination
+            page={data.pagination.page}
+            pages={data.pagination.pages}
+            total={data.pagination.total}
+            limit={data.pagination.limit}
+          />
+        </Suspense>
       )}
     </div>
   )

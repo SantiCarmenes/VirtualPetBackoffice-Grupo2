@@ -58,28 +58,28 @@ function ActionCell({ order }: { order: Order }) {
     }
   }
 
-  if (allowedTransitions.length === 0) {
-    return <span className="text-xs text-muted-foreground">Terminal</span>
-  }
-
   return (
     <div className="flex items-center gap-2">
-      <Select
-        disabled={isUpdating}
-        value=""
-        onValueChange={(value) => handleStatusChange(value as OrderStatus)}
-      >
-        <SelectTrigger className="h-8 w-[160px]">
-          <SelectValue placeholder="Cambiar estado" />
-        </SelectTrigger>
-        <SelectContent>
-          {allowedTransitions.map((status) => (
-            <SelectItem key={status} value={status}>
-              {STATUS_LABELS[status]}
-            </SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
+      {allowedTransitions.length > 0 ? (
+        <Select
+          disabled={isUpdating}
+          value=""
+          onValueChange={(value) => handleStatusChange(value as OrderStatus)}
+        >
+          <SelectTrigger className="h-8 w-[160px]">
+            <SelectValue placeholder="Cambiar estado" />
+          </SelectTrigger>
+          <SelectContent>
+            {allowedTransitions.map((status) => (
+              <SelectItem key={status} value={status}>
+                {STATUS_LABELS[status]}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      ) : (
+        <span className="text-xs text-muted-foreground">Terminal</span>
+      )}
       <Link href={`/orders/${order.id}/fulfill`}>
         <Button variant="outline" size="sm">
           Ver

@@ -6,7 +6,10 @@ import Link from 'next/link'
 import { cn } from '@/lib/utils'
 
 export default async function DashboardPage() {
-  const stats = await getServerOrderStats()
+  const stats = await getServerOrderStats().catch(() => ({
+    RECEIVED: 0, IN_PREPARATION: 0, IN_TRANSIT: 0,
+    DELIVERED: 0, NOT_DELIVERED: 0, CANCELLED: 0, total: 0,
+  }))
 
   const pending   = stats.RECEIVED + stats.IN_PREPARATION
   const inTransit = stats.IN_TRANSIT + stats.NOT_DELIVERED
@@ -105,22 +108,22 @@ export default async function DashboardPage() {
 
       <div className="flex flex-wrap gap-2">
         <Link href="/orders?status=RECEIVED">
-          <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
+          <Button variant="outline" className="border-foreground text-foreground hover:bg-muted">
             Ver Recibidos
           </Button>
         </Link>
         <Link href="/orders?status=IN_PREPARATION">
-          <Button variant="outline" className="border-status-pending text-status-pending hover:bg-status-pending-muted">
+          <Button variant="outline" className="border-foreground text-foreground hover:bg-muted">
             Ver En Preparación
           </Button>
         </Link>
         <Link href="/orders?status=IN_TRANSIT">
-          <Button variant="outline" className="border-status-in-transit text-status-in-transit hover:bg-status-in-transit-muted">
+          <Button variant="outline" className="border-foreground text-foreground hover:bg-muted">
             Ver En Camino
           </Button>
         </Link>
         <Link href="/orders?status=NOT_DELIVERED">
-          <Button variant="outline" className="border-amber-500 text-amber-600 hover:bg-amber-50">
+          <Button variant="outline" className="border-foreground text-foreground hover:bg-muted">
             Ver No Entregados
           </Button>
         </Link>

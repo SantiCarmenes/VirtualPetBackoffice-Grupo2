@@ -79,7 +79,9 @@ function ActionCell({ order }: { order: Order }) {
           </SelectContent>
         </Select>
       ) : (
-        <span className="text-xs text-muted-foreground">Terminal</span>
+        <span className="inline-flex h-8 w-[160px] items-center rounded-md border border-dashed border-muted-foreground/30 px-3 text-xs text-muted-foreground">
+          Sin acciones pendientes
+        </span>
       )}
       <Link href={`/orders/${order.id}/fulfill`}>
         <Button variant="outline" size="sm">

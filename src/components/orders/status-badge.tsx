@@ -14,7 +14,7 @@ const statusStyles: Record<OrderStatus, string> = {
 
 export function StatusBadge({ status }: { status: OrderStatus }) {
   return (
-    <Badge className={statusStyles[status] ?? 'bg-muted text-muted-foreground'}>
+    <Badge className={`whitespace-nowrap ${statusStyles[status] ?? 'bg-muted text-muted-foreground'}`}>
       {STATUS_LABELS[status] ?? status}
     </Badge>
   )

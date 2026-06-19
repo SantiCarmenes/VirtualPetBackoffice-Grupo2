@@ -6,6 +6,8 @@ export type OrderStatus =
   | 'NOT_DELIVERED'
   | 'CANCELLED'
 
+export type InvoiceStatus = 'NONE' | 'REQUIRED' | 'DONE'
+
 export const STATUS_LABELS: Record<OrderStatus, string> = {
   RECEIVED: 'Recibido',
   IN_PREPARATION: 'En Preparación',
@@ -15,11 +17,17 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
   CANCELLED: 'Cancelado',
 }
 
+export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
+  NONE: 'No solicitada',
+  REQUIRED: 'Requiere factura',
+  DONE: 'Facturado',
+}
+
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
-  IN_PREPARATION: ['IN_TRANSIT', 'CANCELLED'],
-  IN_TRANSIT: ['DELIVERED', 'NOT_DELIVERED'],
-  NOT_DELIVERED: ['IN_TRANSIT', 'CANCELLED'],
+  IN_PREPARATION: ['CANCELLED'],
+  IN_TRANSIT: [],
+  NOT_DELIVERED: ['CANCELLED'],
   DELIVERED: [],
   CANCELLED: [],
 }
@@ -50,6 +58,20 @@ export interface ShippingAddress {
   [key: string]: unknown
 }
 
+export interface Shipment {
+  id: string
+  orderId: string
+  methodId: string
+  methodName: string
+  riderId: string | null
+  riderName: string | null
+  takenAt: string | null
+  status: string
+  trackingNumber: string | null
+  estimatedDelivery: string | null
+  createdAt: string
+}
+
 export interface Order {
   id: string
   userId: string
@@ -65,9 +87,12 @@ export interface Order {
   currency: string
   deliveryAttempts: number
   nextDeliveryAt?: string
+  invoiceStatus: InvoiceStatus
+  invoiceCuit?: string | null
   createdAt: string
   updatedAt: string
   payment?: Payment | null
+  shipment?: Shipment | null
 }
 
 export interface OrdersResponse {
@@ -132,4 +157,3 @@ export interface Payment {
   createdAt: string
   updatedAt: string
 }
-

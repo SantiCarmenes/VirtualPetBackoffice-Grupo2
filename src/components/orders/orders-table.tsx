@@ -10,10 +10,10 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, FileText } from 'lucide-react'
 import { useState } from 'react'
 
-import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS } from '@/types/order'
+import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS, INVOICE_STATUS_LABELS, InvoiceStatus } from '@/types/order'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -45,6 +45,7 @@ function ActionCell({ order }: { order: Order }) {
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
   const allowedTransitions = getAllowedTransitions(order.status)
+  const canMarkInvoiced = order.invoiceStatus === 'REQUIRED'
 
   async function handleStatusChange(newStatus: OrderStatus) {
     setIsUpdating(true)
@@ -59,16 +60,39 @@ function ActionCell({ order }: { order: Order }) {
     }
   }
 
+  async function handleMarkInvoiced() {
+    setIsUpdating(true)
+    try {
+      await orderService.markAsInvoiced(order.id)
+      toast.success('Pedido marcado como facturado')
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error?.message || 'Error al marcar como facturado')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  async function handleSelectChange(value: string) {
+    if (value === '__MARK_INVOICED__') {
+      await handleMarkInvoiced()
+    } else {
+      await handleStatusChange(value as OrderStatus)
+    }
+  }
+
+  const hasActions = allowedTransitions.length > 0 || canMarkInvoiced
+
   return (
     <div className="flex items-center gap-2">
-      {allowedTransitions.length > 0 ? (
+      {hasActions ? (
         <Select
           disabled={isUpdating}
           value=""
-          onValueChange={(value) => handleStatusChange(value as OrderStatus)}
+          onValueChange={handleSelectChange}
         >
-          <SelectTrigger className="h-8 w-[160px]">
-            <SelectValue placeholder="Cambiar estado" />
+          <SelectTrigger className="h-8 w-[180px]">
+            <SelectValue placeholder="Acciones" />
           </SelectTrigger>
           <SelectContent>
             {allowedTransitions.map((status) => (
@@ -76,10 +100,15 @@ function ActionCell({ order }: { order: Order }) {
                 {STATUS_LABELS[status]}
               </SelectItem>
             ))}
+            {canMarkInvoiced && (
+              <SelectItem value="__MARK_INVOICED__">
+                Marcar como Facturado
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
       ) : (
-        <span className="inline-flex h-8 w-[160px] items-center rounded-md border border-dashed border-muted-foreground/30 px-3 text-xs text-muted-foreground">
+        <span className="inline-flex h-8 w-[180px] items-center rounded-md border border-dashed border-muted-foreground/30 px-3 text-xs text-muted-foreground">
           Sin acciones pendientes
         </span>
       )}
@@ -89,6 +118,22 @@ function ActionCell({ order }: { order: Order }) {
         </Button>
       </Link>
     </div>
+  )
+}
+
+function InvoiceBadge({ status }: { status: InvoiceStatus }) {
+  if (status === 'NONE') return <span className="text-muted-foreground">—</span>
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+        status === 'DONE'
+          ? 'bg-status-delivered text-status-delivered-foreground'
+          : 'bg-blue-100 text-blue-700'
+      }`}
+    >
+      <FileText className="h-3 w-3" />
+      {INVOICE_STATUS_LABELS[status]}
+    </span>
   )
 }
 
@@ -121,6 +166,11 @@ export function OrdersTable({ data }: { data: Order[] }) {
       accessorKey: 'status',
       header: 'Estado',
       cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+    },
+    {
+      accessorKey: 'invoiceStatus',
+      header: 'Factura',
+      cell: ({ row }) => <InvoiceBadge status={row.getValue('invoiceStatus') as InvoiceStatus} />,
     },
     {
       accessorKey: 'deliveryAttempts',
@@ -234,7 +284,12 @@ export function OrdersTable({ data }: { data: Order[] }) {
                       <p className="font-mono text-xs font-medium text-foreground">
                         #{order.id.slice(0, 8).toUpperCase()}
                       </p>
-                      <StatusBadge status={order.status} />
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={order.status} />
+                        {order.invoiceStatus !== 'NONE' && (
+                          <InvoiceBadge status={order.invoiceStatus} />
+                        )}
+                      </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>

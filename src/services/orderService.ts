@@ -28,4 +28,10 @@ export const orderService = {
       body: JSON.stringify({ status }),
     })
   },
+
+  async markAsInvoiced(id: string): Promise<Order> {
+    return apiClient<Order>(`/orders/${id}/invoiced`, {
+      method: 'PATCH',
+    })
+  },
 }

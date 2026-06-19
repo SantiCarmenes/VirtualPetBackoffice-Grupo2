@@ -2,7 +2,7 @@ import { getServerOrderById } from '@/lib/serverData'
 import { notFound } from 'next/navigation'
 import Link from 'next/link'
 import { Button } from '@/components/ui/button'
-import { ArrowLeft, AlertTriangle } from 'lucide-react'
+import { ArrowLeft, AlertTriangle, Truck, User } from 'lucide-react'
 import { StatusBadge } from '@/components/orders/status-badge'
 import { FulfillmentChecklist } from '@/components/orders/fulfillment-checklist'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
@@ -30,12 +30,20 @@ const PAYMENT_STATUS_LABELS: Record<string, string> = {
   REFUNDED: 'Reembolsado',
 }
 
+const SHIPMENT_STATUS_LABELS: Record<string, string> = {
+  PENDING: 'Pendiente',
+  PROCESSING: 'Procesando',
+  SHIPPED: 'Enviado',
+  DELIVERED: 'Entregado',
+}
+
 export default async function FulfillPage({ params }: { params: { id: string } }) {
   const order = await getServerOrderById(params.id)
 
   if (!order) notFound()
 
   const payment = order.payment
+  const shipment = order.shipment
 
   const isCancelled = order.status === 'CANCELLED'
   const isNotDelivered = order.status === 'NOT_DELIVERED'
@@ -162,6 +170,78 @@ export default async function FulfillPage({ params }: { params: { id: string } }
           </div>
         </CardContent>
       </Card>
+
+      {/* Shipping / Rider info */}
+      {shipment && (
+        <Card>
+          <CardHeader>
+            <CardTitle className="flex items-center gap-2">
+              <Truck className="h-5 w-5" />
+              Detalle de Envío
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div>
+                <Label className="text-muted-foreground">Método de Envío</Label>
+                <p className="text-sm font-medium">{shipment.methodName}</p>
+              </div>
+              <div>
+                <Label className="text-muted-foreground">Estado del Envío</Label>
+                <span
+                  className={`inline-flex rounded-full px-2 py-0.5 text-xs font-semibold ${
+                    shipment.status === 'DELIVERED'
+                      ? 'bg-status-delivered text-status-delivered-foreground'
+                      : shipment.status === 'SHIPPED'
+                      ? 'bg-blue-100 text-blue-700'
+                      : 'bg-muted text-muted-foreground'
+                  }`}
+                >
+                  {SHIPMENT_STATUS_LABELS[shipment.status] ?? shipment.status}
+                </span>
+              </div>
+              {shipment.riderName && (
+                <div>
+                  <Label className="text-muted-foreground">Rider Asignado</Label>
+                  <p className="text-sm font-medium flex items-center gap-1">
+                    <User className="h-4 w-4 text-muted-foreground" />
+                    {shipment.riderName}
+                  </p>
+                </div>
+              )}
+              {shipment.takenAt && (
+                <div>
+                  <Label className="text-muted-foreground">Retirado el</Label>
+                  <p className="text-sm font-medium">
+                    {new Date(shipment.takenAt).toLocaleString()}
+                  </p>
+                </div>
+              )}
+              {shipment.trackingNumber && (
+                <div>
+                  <Label className="text-muted-foreground">Nº de Seguimiento</Label>
+                  <p className="text-sm font-mono font-medium">{shipment.trackingNumber}</p>
+                </div>
+              )}
+              {shipment.estimatedDelivery && (
+                <div>
+                  <Label className="text-muted-foreground">Entrega Estimada</Label>
+                  <p className="text-sm font-medium">
+                    {new Date(shipment.estimatedDelivery).toLocaleDateString()}
+                  </p>
+                </div>
+              )}
+              {!shipment.riderName && (
+                <div className="sm:col-span-2">
+                  <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+                    Aún no hay un rider asignado a este envío
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      )}
 
       {/* Totals */}
       <Card>

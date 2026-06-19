@@ -189,7 +189,7 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                     {isUpdating ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Actualizando...</>
                     ) : (
-                      <><Package className="mr-2 h-4 w-4" />Iniciar Preparación</>
+                      <><Package className="mr-2 h-4 w-4" />Marcar como Preparado</>
                     )}
                   </Button>
                 </>

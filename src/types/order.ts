@@ -10,7 +10,7 @@ export type InvoiceStatus = 'NONE' | 'REQUIRED' | 'DONE'
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {
   RECEIVED: 'Recibido',
-  IN_PREPARATION: 'En Preparación',
+  IN_PREPARATION: 'Preparado',
   IN_TRANSIT: 'En Camino',
   DELIVERED: 'Entregado',
   NOT_DELIVERED: 'No Entregado',
@@ -24,7 +24,7 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
 }
 
 export const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
-  IN_PREPARATION: 'Iniciar Preparación',
+  IN_PREPARATION: 'Marcar como Preparado',
   CANCELLED: 'Cancelar',
 }
 

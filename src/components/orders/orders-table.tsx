@@ -13,7 +13,7 @@ import {
 import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, FileText } from 'lucide-react'
 import { useState } from 'react'
 
-import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS, INVOICE_STATUS_LABELS, InvoiceStatus } from '@/types/order'
+import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS, ACTION_LABELS, INVOICE_STATUS_LABELS, InvoiceStatus } from '@/types/order'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -97,7 +97,7 @@ function ActionCell({ order }: { order: Order }) {
           <SelectContent>
             {allowedTransitions.map((status) => (
               <SelectItem key={status} value={status}>
-                {STATUS_LABELS[status]}
+                {ACTION_LABELS[status] ?? STATUS_LABELS[status]}
               </SelectItem>
             ))}
             {canMarkInvoiced && (
@@ -143,13 +143,15 @@ export function OrdersTable({ data }: { data: Order[] }) {
   const columns: ColumnDef<Order>[] = [
     {
       accessorKey: 'id',
-      header: 'Nº Pedido',
+      header: () => <span className="text-left">Nº Pedido</span>,
+      size: 100,
       cell: ({ row }) => (
         <span className="font-mono text-xs">{(row.getValue('id') as string).slice(0, 8).toUpperCase()}</span>
       ),
     },
     {
       accessorKey: 'customerName',
+      size: 150,
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -164,41 +166,51 @@ export function OrdersTable({ data }: { data: Order[] }) {
     },
     {
       accessorKey: 'status',
-      header: 'Estado',
-      cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+      header: () => <span className="text-center block">Estado</span>,
+      size: 130,
+      cell: ({ row }) => (
+        <div className="text-center"><StatusBadge status={row.getValue('status')} /></div>
+      ),
     },
     {
       accessorKey: 'invoiceStatus',
-      header: 'Factura',
-      cell: ({ row }) => <InvoiceBadge status={row.getValue('invoiceStatus') as InvoiceStatus} />,
+      header: () => <span className="text-center block">Factura</span>,
+      size: 130,
+      cell: ({ row }) => (
+        <div className="text-center"><InvoiceBadge status={row.getValue('invoiceStatus') as InvoiceStatus} /></div>
+      ),
     },
     {
       accessorKey: 'deliveryAttempts',
-      header: 'Intentos',
+      header: () => <span className="text-center block">Intentos</span>,
+      size: 80,
       cell: ({ row }) => {
         const attempts = row.getValue('deliveryAttempts') as number
-        if (!attempts) return <span className="text-muted-foreground">—</span>
-        return <span className="text-amber-600 font-medium">{attempts}/3</span>
+        if (!attempts) return <div className="text-center text-muted-foreground">—</div>
+        return <div className="text-center text-amber-600 font-medium">{attempts}/3</div>
       },
     },
     {
       accessorKey: 'items',
-      header: 'Productos',
+      header: () => <span className="text-center block">Productos</span>,
+      size: 90,
       cell: ({ row }) => {
         const items = row.getValue('items') as OrderItem[] | undefined
-        return <span>{items?.length ?? 0}</span>
+        return <div className="text-center">{items?.length ?? 0}</div>
       },
     },
     {
       accessorKey: 'total',
-      header: 'Total',
+      header: () => <span className="text-right block">Total</span>,
+      size: 100,
       cell: ({ row }) => {
         const total = row.getValue('total') as number
-        return <span>${Number(total).toFixed(2)}</span>
+        return <div className="text-right">${Number(total).toFixed(2)}</div>
       },
     },
     {
       accessorKey: 'createdAt',
+      size: 110,
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -218,6 +230,7 @@ export function OrdersTable({ data }: { data: Order[] }) {
     {
       id: 'actions',
       header: '',
+      size: 220,
       cell: ({ row }) => <ActionCell order={row.original} />,
     },
   ]

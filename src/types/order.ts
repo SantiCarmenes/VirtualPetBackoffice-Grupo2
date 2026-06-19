@@ -23,6 +23,11 @@ export const INVOICE_STATUS_LABELS: Record<InvoiceStatus, string> = {
   DONE: 'Facturado',
 }
 
+export const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
+  IN_PREPARATION: 'Iniciar Preparación',
+  CANCELLED: 'Cancelar',
+}
+
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
   RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
   IN_PREPARATION: ['CANCELLED'],

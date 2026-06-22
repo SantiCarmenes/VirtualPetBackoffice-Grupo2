@@ -10,10 +10,10 @@ import {
   SortingState,
   useReactTable,
 } from '@tanstack/react-table'
-import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, ChevronRight, FileText } from 'lucide-react'
 import { useState } from 'react'
 
-import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS } from '@/types/order'
+import { Order, OrderStatus, OrderItem, getAllowedTransitions, STATUS_LABELS, ACTION_LABELS, INVOICE_STATUS_LABELS, InvoiceStatus } from '@/types/order'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
 import {
@@ -45,6 +45,7 @@ function ActionCell({ order }: { order: Order }) {
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
   const allowedTransitions = getAllowedTransitions(order.status)
+  const canMarkInvoiced = order.invoiceStatus === 'REQUIRED'
 
   async function handleStatusChange(newStatus: OrderStatus) {
     setIsUpdating(true)
@@ -59,27 +60,55 @@ function ActionCell({ order }: { order: Order }) {
     }
   }
 
+  async function handleMarkInvoiced() {
+    setIsUpdating(true)
+    try {
+      await orderService.markAsInvoiced(order.id)
+      toast.success('Pedido marcado como facturado')
+      router.refresh()
+    } catch (error: any) {
+      toast.error(error?.message || 'Error al marcar como facturado')
+    } finally {
+      setIsUpdating(false)
+    }
+  }
+
+  async function handleSelectChange(value: string) {
+    if (value === '__MARK_INVOICED__') {
+      await handleMarkInvoiced()
+    } else {
+      await handleStatusChange(value as OrderStatus)
+    }
+  }
+
+  const hasActions = allowedTransitions.length > 0 || canMarkInvoiced
+
   return (
     <div className="flex items-center gap-2">
-      {allowedTransitions.length > 0 ? (
+      {hasActions ? (
         <Select
           disabled={isUpdating}
           value=""
-          onValueChange={(value) => handleStatusChange(value as OrderStatus)}
+          onValueChange={handleSelectChange}
         >
-          <SelectTrigger className="h-8 w-[160px]">
-            <SelectValue placeholder="Cambiar estado" />
+          <SelectTrigger className="h-8 w-[180px]">
+            <SelectValue placeholder="Acciones" />
           </SelectTrigger>
           <SelectContent>
             {allowedTransitions.map((status) => (
               <SelectItem key={status} value={status}>
-                {STATUS_LABELS[status]}
+                {ACTION_LABELS[status] ?? STATUS_LABELS[status]}
               </SelectItem>
             ))}
+            {canMarkInvoiced && (
+              <SelectItem value="__MARK_INVOICED__">
+                Marcar como Facturado
+              </SelectItem>
+            )}
           </SelectContent>
         </Select>
       ) : (
-        <span className="inline-flex h-8 w-[160px] items-center rounded-md border border-dashed border-muted-foreground/30 px-3 text-xs text-muted-foreground">
+        <span className="inline-flex h-8 w-[180px] items-center rounded-md border border-dashed border-muted-foreground/30 px-3 text-xs text-muted-foreground">
           Sin acciones pendientes
         </span>
       )}
@@ -92,19 +121,37 @@ function ActionCell({ order }: { order: Order }) {
   )
 }
 
+function InvoiceBadge({ status }: { status: InvoiceStatus }) {
+  if (status === 'NONE') return <span className="text-muted-foreground">—</span>
+  return (
+    <span
+      className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-semibold ${
+        status === 'DONE'
+          ? 'bg-status-delivered text-status-delivered-foreground'
+          : 'bg-blue-100 text-blue-700'
+      }`}
+    >
+      <FileText className="h-3 w-3" />
+      {INVOICE_STATUS_LABELS[status]}
+    </span>
+  )
+}
+
 export function OrdersTable({ data }: { data: Order[] }) {
   const [sorting, setSorting] = useState<SortingState>([])
 
   const columns: ColumnDef<Order>[] = [
     {
       accessorKey: 'id',
-      header: 'Nº Pedido',
+      header: () => <span className="text-left">Nº Pedido</span>,
+      size: 100,
       cell: ({ row }) => (
         <span className="font-mono text-xs">{(row.getValue('id') as string).slice(0, 8).toUpperCase()}</span>
       ),
     },
     {
       accessorKey: 'customerName',
+      size: 150,
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -119,36 +166,51 @@ export function OrdersTable({ data }: { data: Order[] }) {
     },
     {
       accessorKey: 'status',
-      header: 'Estado',
-      cell: ({ row }) => <StatusBadge status={row.getValue('status')} />,
+      header: () => <span className="text-center block">Estado</span>,
+      size: 130,
+      cell: ({ row }) => (
+        <div className="text-center"><StatusBadge status={row.getValue('status')} /></div>
+      ),
+    },
+    {
+      accessorKey: 'invoiceStatus',
+      header: () => <span className="text-center block">Factura</span>,
+      size: 130,
+      cell: ({ row }) => (
+        <div className="text-center"><InvoiceBadge status={row.getValue('invoiceStatus') as InvoiceStatus} /></div>
+      ),
     },
     {
       accessorKey: 'deliveryAttempts',
-      header: 'Intentos',
+      header: () => <span className="text-center block">Intentos</span>,
+      size: 80,
       cell: ({ row }) => {
         const attempts = row.getValue('deliveryAttempts') as number
-        if (!attempts) return <span className="text-muted-foreground">—</span>
-        return <span className="text-amber-600 font-medium">{attempts}/3</span>
+        if (!attempts) return <div className="text-center text-muted-foreground">—</div>
+        return <div className="text-center text-amber-600 font-medium">{attempts}/3</div>
       },
     },
     {
       accessorKey: 'items',
-      header: 'Productos',
+      header: () => <span className="text-center block">Productos</span>,
+      size: 90,
       cell: ({ row }) => {
         const items = row.getValue('items') as OrderItem[] | undefined
-        return <span>{items?.length ?? 0}</span>
+        return <div className="text-center">{items?.length ?? 0}</div>
       },
     },
     {
       accessorKey: 'total',
-      header: 'Total',
+      header: () => <span className="text-right block">Total</span>,
+      size: 100,
       cell: ({ row }) => {
         const total = row.getValue('total') as number
-        return <span>${Number(total).toFixed(2)}</span>
+        return <div className="text-right">${Number(total).toFixed(2)}</div>
       },
     },
     {
       accessorKey: 'createdAt',
+      size: 110,
       header: ({ column }) => (
         <Button
           variant="ghost"
@@ -168,6 +230,7 @@ export function OrdersTable({ data }: { data: Order[] }) {
     {
       id: 'actions',
       header: '',
+      size: 220,
       cell: ({ row }) => <ActionCell order={row.original} />,
     },
   ]
@@ -234,7 +297,12 @@ export function OrdersTable({ data }: { data: Order[] }) {
                       <p className="font-mono text-xs font-medium text-foreground">
                         #{order.id.slice(0, 8).toUpperCase()}
                       </p>
-                      <StatusBadge status={order.status} />
+                      <div className="flex items-center gap-2">
+                        <StatusBadge status={order.status} />
+                        {order.invoiceStatus !== 'NONE' && (
+                          <InvoiceBadge status={order.invoiceStatus} />
+                        )}
+                      </div>
                     </div>
                     <ChevronRight className="h-5 w-5 text-muted-foreground" />
                   </CardContent>

@@ -16,10 +16,10 @@ export const STATUS_LABELS: Record<OrderStatus, string> = {
 }
 
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
-  IN_PREPARATION: ['IN_TRANSIT', 'CANCELLED'],
-  IN_TRANSIT: ['DELIVERED', 'NOT_DELIVERED'],
-  NOT_DELIVERED: ['IN_TRANSIT', 'CANCELLED'],
+  RECEIVED: ['IN_PREPARATION'],
+  IN_PREPARATION: [],
+  IN_TRANSIT: [],
+  NOT_DELIVERED: [],
   DELIVERED: [],
   CANCELLED: [],
 }

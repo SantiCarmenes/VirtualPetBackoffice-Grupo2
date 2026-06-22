@@ -29,10 +29,15 @@ export async function getServerOrderStats(): Promise<OrderStats> {
   } as RequestInit)
 }
 
-export async function getServerOrderById(id: string): Promise<Order> {
-  return serverFetch<Order>(`/orders/${id}`, {
-    next: { tags: ['orders'] },
-  } as RequestInit)
+export async function getServerOrderById(id: string): Promise<Order | null> {
+  try {
+    return await serverFetch<Order>(`/orders/${id}`, {
+      next: { tags: ['orders'] },
+    } as RequestInit)
+  } catch (err: any) {
+    if (err?.status === 404) return null
+    throw err
+  }
 }
 
 export async function getServerUser(): Promise<User> {

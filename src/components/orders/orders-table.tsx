@@ -45,7 +45,8 @@ function ActionCell({ order }: { order: Order }) {
   const router = useRouter()
   const [isUpdating, setIsUpdating] = useState(false)
   const allowedTransitions = getAllowedTransitions(order.status)
-  const canMarkInvoiced = order.invoiceStatus === 'REQUIRED'
+  // Facturar está disponible en todos los estados salvo cancelado.
+  const canMarkInvoiced = order.invoiceStatus === 'REQUIRED' && order.status !== 'CANCELLED'
 
   async function handleStatusChange(newStatus: OrderStatus) {
     setIsUpdating(true)

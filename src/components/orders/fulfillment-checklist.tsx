@@ -187,6 +187,15 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                       <><Package className="mr-2 h-4 w-4" />Marcar como Preparado</>
                     )}
                   </Button>
+                  <Button
+                    variant="destructive"
+                    className="w-full"
+                    disabled={isUpdating}
+                    onClick={() => setShowCancelDialog(true)}
+                  >
+                    <XCircle className="mr-2 h-4 w-4" />
+                    Cancelar Pedido
+                  </Button>
                 </>
               )}
 
@@ -239,6 +248,17 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                     )}
                   </div>
                   <Button
+                    className="w-full"
+                    disabled={isUpdating}
+                    onClick={() => updateStatus('IN_PREPARATION', 'Pedido vuelto a preparación')}
+                  >
+                    {isUpdating ? (
+                      <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Actualizando...</>
+                    ) : (
+                      <><Package className="mr-2 h-4 w-4" />Volver a Preparar</>
+                    )}
+                  </Button>
+                  <Button
                     variant="destructive"
                     className="w-full"
                     disabled={isUpdating}
@@ -286,7 +306,7 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                   <span className="font-mono font-medium">{order.invoiceCuit}</span>
                 </div>
               )}
-              {order.invoiceStatus === 'REQUIRED' && (
+              {order.invoiceStatus === 'REQUIRED' && order.status !== 'CANCELLED' && (
                 <Button
                   className="w-full"
                   variant="outline"

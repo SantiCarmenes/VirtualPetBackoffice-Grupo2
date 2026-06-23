@@ -28,13 +28,16 @@ export const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
   CANCELLED: 'Cancelar',
 }
 
+// Acciones permitidas desde backoffice por estado.
+// IN_TRANSIT → DELIVERED / NOT_DELIVERED es exclusivo del rider (app móvil).
+// IN_TRANSIT y DELIVERED no tienen transiciones: solo admiten facturación.
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-  RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
-  IN_PREPARATION: ['IN_TRANSIT', 'CANCELLED'],
-  IN_TRANSIT: ['DELIVERED', 'NOT_DELIVERED'],
-  NOT_DELIVERED: ['IN_TRANSIT', 'CANCELLED'],
-  DELIVERED: [],
-  CANCELLED: [],
+  RECEIVED: ['IN_PREPARATION', 'CANCELLED'],    // recibido: marcar como preparado o cancelar
+  IN_PREPARATION: ['CANCELLED'],                // preparado: cancelar mientras nadie lo retira
+  IN_TRANSIT: [],                               // en camino: ninguna acción (solo facturar)
+  NOT_DELIVERED: ['IN_PREPARATION', 'CANCELLED'], // fallido: volver a preparar o cancelar
+  DELIVERED: [],                                // entregado: solo facturar
+  CANCELLED: [],                                // cancelado: ninguna acción
 }
 
 export function getAllowedTransitions(currentStatus: OrderStatus): OrderStatus[] {

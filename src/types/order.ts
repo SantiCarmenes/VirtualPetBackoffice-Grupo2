@@ -29,17 +29,10 @@ export const ACTION_LABELS: Partial<Record<OrderStatus, string>> = {
 }
 
 export const STATUS_TRANSITIONS: Record<OrderStatus, OrderStatus[]> = {
-<<<<<<< Updated upstream
-  RECEIVED: ['IN_PREPARATION'],
-  IN_PREPARATION: [],
-  IN_TRANSIT: [],
-  NOT_DELIVERED: [],
-=======
   RECEIVED: ['IN_PREPARATION', 'CANCELLED'],
   IN_PREPARATION: ['IN_TRANSIT', 'CANCELLED'],
   IN_TRANSIT: ['DELIVERED', 'NOT_DELIVERED'],
-  NOT_DELIVERED: ['IN_PREPARATION', 'IN_TRANSIT', 'CANCELLED'],
->>>>>>> Stashed changes
+  NOT_DELIVERED: ['IN_TRANSIT', 'CANCELLED'],
   DELIVERED: [],
   CANCELLED: [],
 }

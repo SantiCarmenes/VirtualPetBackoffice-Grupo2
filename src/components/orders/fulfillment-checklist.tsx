@@ -169,13 +169,22 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                   </div>
                   <Button
                     className="w-full"
+<<<<<<< Updated upstream
                     disabled={!isFullyPacked || isUpdating}
                     onClick={() => updateStatus('IN_PREPARATION', 'Preparación iniciada')}
+=======
+                    disabled={isUpdating}
+                    onClick={() => updateStatus('IN_PREPARATION', 'Devuelto a depósito para reintento')}
+>>>>>>> Stashed changes
                   >
                     {isUpdating ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Actualizando...</>
                     ) : (
+<<<<<<< Updated upstream
                       <><Package className="mr-2 h-4 w-4" />Marcar como Preparado</>
+=======
+                      <><RotateCcw className="mr-2 h-4 w-4" />Devolver a Depósito (Reintentar)</>
+>>>>>>> Stashed changes
                     )}
                   </Button>
                 </>

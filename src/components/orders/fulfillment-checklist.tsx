@@ -18,6 +18,14 @@ import {
   CardTitle,
 } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 interface FulfillmentChecklistProps {
   order: Order
@@ -27,6 +35,7 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
   const router = useRouter()
   const [packedItemIds, setPackedItemIds] = useState<Set<string>>(new Set())
   const [isUpdating, setIsUpdating] = useState(false)
+  const [showCancelDialog, setShowCancelDialog] = useState(false)
 
   const totalItems = order.items.length
   const packedCount = packedItemIds.size
@@ -169,22 +178,13 @@ export function FulfillmentChecklist({ order }: FulfillmentChecklistProps) {
                   </div>
                   <Button
                     className="w-full"
-<<<<<<< Updated upstream
                     disabled={!isFullyPacked || isUpdating}
                     onClick={() => updateStatus('IN_PREPARATION', 'Preparación iniciada')}
-=======
-                    disabled={isUpdating}
-                    onClick={() => updateStatus('IN_PREPARATION', 'Devuelto a depósito para reintento')}
->>>>>>> Stashed changes
                   >
                     {isUpdating ? (
                       <><Loader2 className="mr-2 h-4 w-4 animate-spin" />Actualizando...</>
                     ) : (
-<<<<<<< Updated upstream
                       <><Package className="mr-2 h-4 w-4" />Marcar como Preparado</>
-=======
-                      <><RotateCcw className="mr-2 h-4 w-4" />Devolver a Depósito (Reintentar)</>
->>>>>>> Stashed changes
                     )}
                   </Button>
                 </>

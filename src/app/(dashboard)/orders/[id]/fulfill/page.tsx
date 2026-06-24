@@ -35,6 +35,7 @@ const SHIPMENT_STATUS_LABELS: Record<string, string> = {
   PROCESSING: 'Procesando',
   SHIPPED: 'Enviado',
   DELIVERED: 'Entregado',
+  NOT_DELIVERED: 'No Entregado',
 }
 
 export default async function FulfillPage({ params }: { params: { id: string } }) {
@@ -194,6 +195,8 @@ export default async function FulfillPage({ params }: { params: { id: string } }
                       ? 'bg-status-delivered text-status-delivered-foreground'
                       : shipment.status === 'SHIPPED'
                       ? 'bg-blue-100 text-blue-700'
+                      : shipment.status === 'NOT_DELIVERED'
+                      ? 'bg-red-100 text-red-700'
                       : 'bg-muted text-muted-foreground'
                   }`}
                 >

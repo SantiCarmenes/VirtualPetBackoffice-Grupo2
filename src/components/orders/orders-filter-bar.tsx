@@ -30,7 +30,8 @@ export function OrdersFilterBar({ currentStatus }: { currentStatus?: OrderStatus
       params.delete('status')
     }
     params.delete('page')
-    router.push(`${pathname}?${params.toString()}`)
+    const query = params.toString()
+    router.push(query ? `${pathname}?${query}` : pathname)
   }
 
   function handleRefresh() {

@@ -5,6 +5,8 @@ import { OrdersFilterBar } from '@/components/orders/orders-filter-bar'
 import { UrlPagination } from '@/components/ui/url-pagination'
 import { OrderStatus } from '@/types/order'
 
+export const dynamic = 'force-dynamic'
+
 export default async function OrdersPage({
   searchParams,
 }: {

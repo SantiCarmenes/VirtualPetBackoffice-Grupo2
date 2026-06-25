@@ -19,20 +19,20 @@ export async function getServerOrders(params?: GetOrdersParams): Promise<OrdersR
   const path = `/orders/all${queryString ? '?' + queryString : ''}`
 
   return serverFetch<OrdersResponse>(path, {
-    next: { revalidate: 30, tags: ['orders'] },
+    cache: 'no-store',
   } as RequestInit)
 }
 
 export async function getServerOrderStats(): Promise<OrderStats> {
   return serverFetch<OrderStats>('/orders/stats', {
-    next: { revalidate: 30, tags: ['orders'] },
+    cache: 'no-store',
   } as RequestInit)
 }
 
 export async function getServerOrderById(id: string): Promise<Order | null> {
   try {
     return await serverFetch<Order>(`/orders/${id}`, {
-      next: { tags: ['orders'] },
+      cache: 'no-store',
     } as RequestInit)
   } catch (err: any) {
     if (err?.status === 404) return null
